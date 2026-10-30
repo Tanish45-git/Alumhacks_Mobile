@@ -1,4 +1,5 @@
 const queries = {
+<<<<<<< HEAD
   organisations: `query OrgList { accounts { organisationId name isActive isAccepted isAdmin } }`,
   projects: `query ProjectList($params: ParamInput!) { projectOverview(params: $params) { _id name description active organisationId location { placeName lat lng } userCount { _id userCount } deviceCount { _id deviceCount } clusterCount { _id clusterCount } nonLoRaWANDeviceCount { _id nonLoRaWANDeviceCount } } }`,
   devices: `query DeviceList($params: ParamInput!) { projects(params: $params) { _id name clusters { _id name devices { _id name devEui hardwareId timestamp } } } }`,
@@ -6,6 +7,14 @@ const queries = {
   modules: `query ModuleList($params: ParamInput!) { modules(params: $params) { _id label moduleType organisationId } }`,
   hardware: `query DownlinkHardware($params: ParamInput!) { hardwareList(params: $params) { _id organisationId deleted loRaWANConfiguration { controllers { moduleId } } } }`,
   networks: `query DownlinkNetworks($params: ParamInput!) { networkList(params: $params) { _id organisationId deleted configuration { httpOptions { networkKeys { _id name } } } } }`,
+=======
+  signIn: `query SignIn($auth: SignInInput!) { signIn(auth: $auth) { _id firstName lastName emailId token defaultAccount organisationId } }`,
+  organisations: `query OrgList { accounts { organisationId name isActive isAccepted isAdmin } }`,
+  projects: `query ProjectList($params: ParamInput!) { projectOverview(params: $params) { _id name description active organisationId location { placeName lat lng } userCount { _id userCount } deviceCount { _id deviceCount } clusterCount { _id clusterCount } nonLoRaWANDeviceCount { _id nonLoRaWANDeviceCount } } }`,
+  devices: `query DeviceList($params: ParamInput!) { projects(params: $params) { _id name clusters { _id name devices { _id name devEui hardwareId timestamp } } } }`,
+  details: `query DeviceDetails($params: ParamInput!) { projects(params: $params) { _id name clusters { _id name devices { _id name description devEui organisationId projectId clusterId hardwareId networkId hardwareType timestamp deleted position { placeName lat lng } outputs { outputId outputName value label color } attributes { attributeId attributeName value } } } } }`,
+  modules: `query ModuleList($params: ParamInput!) { modules(params: $params) { _id label moduleType organisationId } }`,
+>>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
   downlink: `query SendDownlink($action: SendDownlinkInput!) { sendDownlink(action: $action) { timestamp type message } }`,
 };
 
@@ -29,15 +38,20 @@ const formatValue = value => typeof value === 'object' && value !== null ? JSON.
 const outputColor = (value, supplied) => {
   const explicit = String(supplied || '').toLowerCase();
   if (['red', 'amber', 'green', 'blue'].includes(explicit)) return explicit;
+<<<<<<< HEAD
   const text = String(value ?? '').trim().toLowerCase();
   if (['red', 'amber', 'green', 'blue'].includes(text)) return text;
   if (!text || /^(unknown|unavailable|not reported|n\/a|—|-)$/.test(text)) return 'unknown';
+=======
+  const text = String(value ?? '').toLowerCase();
+>>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
   if (/alert|off|low|poor|empty|false|error/.test(text)) return 'red';
   if (/moderate|warning|medium/.test(text)) return 'amber';
   return 'green';
 };
 
 export function normalizeDevice(device) {
+<<<<<<< HEAD
   const outputs = asArray(device.outputs).map(output => {
     const value = formatValue(output.value ?? output.label);
     return { ...output, status: outputColor(value, output.color) };
@@ -45,6 +59,12 @@ export function normalizeDevice(device) {
   const chips = outputs.slice(0, 2).map(output => {
     const value = formatValue(output.value ?? output.label);
     return { label: `${output.outputName || output.label || 'Output'}: ${value}`, status: output.status };
+=======
+  const outputs = asArray(device.outputs);
+  const chips = outputs.slice(0, 2).map(output => {
+    const value = formatValue(output.value ?? output.label);
+    return { label: `${output.outputName || output.label || 'Output'}: ${value}`, status: outputColor(value, output.color) };
+>>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
   });
   if (!chips.length) chips.push({ label: 'Output data unavailable', status: 'blue' });
   if (chips.length === 1) chips.push({ label: `Last heard: ${device.timestamp ? displayDate(device.timestamp) : 'Unknown'}`, status: 'blue' });
@@ -75,6 +95,7 @@ export function hasCoordinates(device) {
   return Number.isFinite(latitude) && Number.isFinite(longitude) && latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180;
 }
 
+<<<<<<< HEAD
 export function normalizeDownlinkOptions(device, organisation, hardwareList, modules, networks) {
   const hardware = asArray(hardwareList).find(item =>
     item._id === device.hardwareId &&
@@ -134,6 +155,26 @@ export class GinjerClient {
 
   async request(query, variables = {}) {
     const headers = { 'Content-Type': 'application/json', 'X-Alumhacks-Session': this.sessionId };
+=======
+export class GinjerClient {
+  constructor(baseUrl) { this.baseUrl = baseUrl.replace(/\/$/, ''); }
+
+  async saveToken(token) {
+    const response = await fetch(`${this.baseUrl}/api/token`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }),
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(body.error || `Backend rejected the token (${response.status}).`);
+  }
+
+  clearToken() {
+    return fetch(`${this.baseUrl}/api/token`, { method: 'DELETE' }).catch(() => {});
+  }
+
+  async request(query, variables = {}, authenticated = true) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (authenticated) headers['X-Ginjer-Authenticated'] = 'true';
+>>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
     let response;
     try {
       response = await fetch(`${this.baseUrl}/api/graphql`, {
@@ -144,17 +185,27 @@ export class GinjerClient {
     }
     let body;
     try { body = await response.json(); } catch { throw new Error(`Backend returned an unreadable response (${response.status}).`); }
+<<<<<<< HEAD
     if (response.status === 401 && body?.code === 'SESSION_EXPIRED') {
       this.sessionId = '';
       const error = new Error(body.error || 'Your session has expired. Please sign in again.');
       error.code = 'SESSION_EXPIRED';
       throw error;
     }
+=======
+>>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
     if (!response.ok) throw new Error(body?.errors?.map(error => error.message).join('; ') || body?.error || `Ginjer request failed (${response.status}).`);
     if (body.errors?.length) throw new Error(body.errors.map(error => error.message).join('; '));
     return body.data || {};
   }
 
+<<<<<<< HEAD
+=======
+  async signIn(email, password) {
+    return this.request(queries.signIn, { auth: { emailId: email, password, application: 'Ginjer', forever: true } }, false);
+  }
+
+>>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
   async getOrganisations(defaultId = '') {
     const result = await this.request(queries.organisations);
     const organisations = asArray(result.accounts).filter(item => item.isAccepted !== false && item.isActive !== false);
@@ -214,6 +265,7 @@ export class GinjerClient {
     return { devices, modules: [...modulesById.values()], errors };
   }
 
+<<<<<<< HEAD
   async getDownlinkOptions(organisation, device) {
     if (!device?.hardwareId || !device?.networkId) throw new Error('Ginjer did not return this device’s hardware and network IDs.');
     const params = { organisationId: organisation.organisationId };
@@ -250,6 +302,15 @@ export class GinjerClient {
         class: value.class,
         networkKeyId: value.networkKeyId,
       },
+=======
+  async sendDownlink(organisation, device, moduleId, value) {
+    if (!isMongoObjectId(device?.apiId)) throw new Error('Ginjer did not return a valid device database ID. Refresh the live device list and select the device again; MAC address and DevEUI are not accepted here.');
+    if (!isMongoObjectId(device?.projectId)) throw new Error('Ginjer did not return a valid project ID for this device. Refresh the project and device list before sending a downlink.');
+    if (!isMongoObjectId(moduleId)) throw new Error('Select a valid DOWNLINK_INTERFACE module returned by Ginjer.');
+    if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('The controller command must be a JSON object.');
+    return this.request(queries.downlink, {
+      action: { organisationId: organisation.organisationId, projectId: device.projectId, deviceId: device.apiId, downlinkInterfaceId: moduleId, value },
+>>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
     });
   }
 }
@@ -273,3 +334,7 @@ export const demoNotices = [
   { title: 'Water Level - 50%', where: 'Tank 2', time: '6:32 AM', color: 'amber', icon: 'notice-water-safe', count: '1' },
   { title: 'Light - On', where: 'Lab Room', time: '6:15 AM', color: 'green', icon: 'notice-light' },
 ];
+<<<<<<< HEAD
+=======
+
+>>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf

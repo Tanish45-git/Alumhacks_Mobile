@@ -35,13 +35,18 @@ Scan the Expo QR code using Expo Go, then enter the private Wi-Fi URL printed by
 
 - `App.js` contains the native screens, navigation, device map, and interactions.
 - `src/api.js` contains Ginjer GraphQL requests and response normalization.
+<<<<<<< HEAD
 - `server.js` keeps a separate, opaque server-side Ginjer session for each signed-in phone and proxies authorized GraphQL requests.
+=======
+- `server.js` stores a Ginjer token in memory and proxies GraphQL requests.
+>>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
 - `assets/reference/` contains the small images used by the React Native screens.
 
 After editing, reload the app in Expo Go. Restart the backend terminal after changing `server.js`.
 
 ## Data and map notes
 
+<<<<<<< HEAD
 Use **Preview demo data** to explore without signing in. For live data, each person signs in with their own Ginjer email address and password. Passwords are used only for the login request; Ginjer tokens remain in backend memory and the phone stores only an opaque session identifier in Expo SecureStore. Do not commit real credentials or tokens.
 
 The device map uses `react-native-maps` and platform maps. In Expo Go it works without adding a Google Maps API key. A standalone Android build requires a restricted Google Maps API key in the native app configuration. Live devices are pinned when Ginjer returns valid coordinates; clearly marked sample pins remain available when no live coordinates are returned. While connected, device data automatically refreshes every 20 seconds. The backend defaults to `https://devapi.ginjer.io/graphql` and can be configured with `GINJER_GRAPHQL_URL`. Keep the app and backend on a trusted private Wi-Fi network; do not expose the backend to the public internet or configure router port forwarding.
@@ -54,4 +59,11 @@ The Expo Go app is a development preview. The backend must be running on the com
 - The backend creates a cryptographically random session ID per successful Ginjer login and keeps that user's Ginjer token isolated in memory.
 - Sessions expire after eight hours of inactivity, are invalidated when Ginjer returns HTTP 401/403, and are removed on logout. The app then clears protected local session data and returns to login.
 - No Ginjer refresh endpoint is implemented: the public Ginjer API documentation was unavailable during implementation, and no refresh operation is present in the supplied integration. Reauthentication is required after expiry until Ginjer supplies the official refresh contract.
+=======
+Use **Preview demo data** to explore without signing in. For live data, use your own Ginjer account or token. Credentials and tokens are held in backend memory; do not commit a real token or password.
+
+The device map uses `react-native-maps` and platform maps. In Expo Go it works without adding a Google Maps API key. A standalone Android build requires a restricted Google Maps API key in the native app configuration. Live devices are pinned when Ginjer returns valid coordinates; clearly marked sample pins remain available when no live coordinates are returned. While connected, device data automatically refreshes every 20 seconds. The backend defaults to `https://devapi.ginjer.io/graphql` and can be configured with `GINJER_GRAPHQL_URL`. Keep the app and backend on a trusted private Wi-Fi network; do not expose the backend to the public internet or configure router port forwarding.
+
+The Expo Go app is a development preview. The backend must be running on the computer while the phone uses the app.
+>>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
 
