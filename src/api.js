@@ -1,0 +1,275 @@
+const queries = {
+  organisations: `query OrgList { accounts { organisationId name isActive isAccepted isAdmin } }`,
+  projects: `query ProjectList($params: ParamInput!) { projectOverview(params: $params) { _id name description active organisationId location { placeName lat lng } userCount { _id userCount } deviceCount { _id deviceCount } clusterCount { _id clusterCount } nonLoRaWANDeviceCount { _id nonLoRaWANDeviceCount } } }`,
+  devices: `query DeviceList($params: ParamInput!) { projects(params: $params) { _id name clusters { _id name devices { _id name devEui hardwareId timestamp } } } }`,
+  details: `query DeviceDetails($params: ParamInput!) { projects(params: $params) { _id name clusters { _id name devices { _id name description devEui organisationId projectId clusterId hardwareId networkId networkKeyId hardwareType timestamp deleted position { placeName lat lng } outputs { outputId outputName value label color } attributes { attributeId attributeName value } } } } }`,
+  modules: `query ModuleList($params: ParamInput!) { modules(params: $params) { _id label moduleType organisationId } }`,
+  hardware: `query DownlinkHardware($params: ParamInput!) { hardwareList(params: $params) { _id organisationId deleted loRaWANConfiguration { controllers { moduleId } } } }`,
+  networks: `query DownlinkNetworks($params: ParamInput!) { networkList(params: $params) { _id organisationId deleted configuration { httpOptions { networkKeys { _id name } } } } }`,
+  downlink: `query SendDownlink($action: SendDownlinkInput!) { sendDownlink(action: $action) { timestamp type message } }`,
+};
+
+const asArray = value => Array.isArray(value) ? value : value ? [value] : [];
+export const isMongoObjectId = value => typeof value === 'string' && /^[a-f\d]{24}$/i.test(value);
+const flattenDevices = projects => asArray(projects).flatMap(project =>
+  asArray(project.clusters).flatMap(cluster =>
+    asArray(cluster.devices).map(device => ({ ...device, clusterName: cluster.name })),
+  ),
+);
+const displayDate = value => {
+  if (!value) return 'Not reported';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+};
+const selectDeviceType = name => /panic|alert|button|sos/i.test(name) ? 'alert'
+  : /water|level|fill/i.test(name) ? 'water'
+    : /air|quality/i.test(name) ? 'air'
+      : /cold|chain|temperature/i.test(name) ? 'snow' : 'controller';
+const formatValue = value => typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value ?? '—');
+const outputColor = (value, supplied) => {
+  const explicit = String(supplied || '').toLowerCase();
+  if (['red', 'amber', 'green', 'blue'].includes(explicit)) return explicit;
+  const text = String(value ?? '').trim().toLowerCase();
+  if (['red', 'amber', 'green', 'blue'].includes(text)) return text;
+  if (!text || /^(unknown|unavailable|not reported|n\/a|—|-)$/.test(text)) return 'unknown';
+  if (/alert|off|low|poor|empty|false|error/.test(text)) return 'red';
+  if (/moderate|warning|medium/.test(text)) return 'amber';
+  return 'green';
+};
+
+export function normalizeDevice(device) {
+  const outputs = asArray(device.outputs).map(output => {
+    const value = formatValue(output.value ?? output.label);
+    return { ...output, status: outputColor(value, output.color) };
+  });
+  const chips = outputs.slice(0, 2).map(output => {
+    const value = formatValue(output.value ?? output.label);
+    return { label: `${output.outputName || output.label || 'Output'}: ${value}`, status: output.status };
+  });
+  if (!chips.length) chips.push({ label: 'Output data unavailable', status: 'blue' });
+  if (chips.length === 1) chips.push({ label: `Last heard: ${device.timestamp ? displayDate(device.timestamp) : 'Unknown'}`, status: 'blue' });
+  const position = device.position || {};
+  return {
+    ...device,
+    apiId: device._id,
+    id: device.devEui || device.hardwareId || device._id,
+    name: device.name || 'Unnamed device',
+    heard: displayDate(device.timestamp),
+    chips,
+    kind: selectDeviceType(device.name || device.hardwareType || 'device'),
+    loc: position.placeName || device.clusterName || 'Location unavailable',
+    output: formatValue(outputs[0]?.value ?? outputs[0]?.label ?? '—'),
+    outputs,
+    attributes: asArray(device.attributes),
+    position,
+    networkId: device.networkId || '',
+    hardwareType: device.hardwareType || '',
+    macAddress: device.macAddress || '',
+  };
+}
+
+export function hasCoordinates(device) {
+  const position = device?.position;
+  if (position?.lat == null || position?.lng == null || position.lat === '' || position.lng === '') return false;
+  const latitude = Number(position.lat), longitude = Number(position.lng);
+  return Number.isFinite(latitude) && Number.isFinite(longitude) && latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180;
+}
+
+export function normalizeDownlinkOptions(device, organisation, hardwareList, modules, networks) {
+  const hardware = asArray(hardwareList).find(item =>
+    item._id === device.hardwareId &&
+    (!item.organisationId || item.organisationId === organisation.organisationId) &&
+    item.deleted !== true,
+  );
+  const controllerIds = new Set(asArray(hardware?.loRaWANConfiguration?.controllers)
+    .map(controller => controller.moduleId)
+    .filter(Boolean));
+  const interfaces = asArray(modules)
+    .filter(module =>
+      controllerIds.has(module._id) &&
+      module.moduleType === 'DOWNLINK_INTERFACE' &&
+      (!module.organisationId || module.organisationId === organisation.organisationId),
+    )
+    .map(module => ({ _id: module._id, label: module.label || 'Downlink interface' }));
+  const network = asArray(networks).find(item =>
+    item._id === device.networkId &&
+    (!item.organisationId || item.organisationId === organisation.organisationId) &&
+    item.deleted !== true,
+  );
+  const networkKeys = asArray(network?.configuration?.httpOptions?.networkKeys)
+    .filter(key => typeof key?._id === 'string' && key._id)
+    .map(key => ({ id: key._id, name: key.name || 'Downlink key' }));
+  const defaultNetworkKeyId = device.networkKeyId
+    ? networkKeys.find(key => key.id === device.networkKeyId)?.id || ''
+    : networkKeys[0]?.id || '';
+  return { interfaces, networkKeys, defaultNetworkKeyId };
+}
+
+export class GinjerClient {
+  constructor(baseUrl, sessionId = '') { this.baseUrl = baseUrl.replace(/\/$/, ''); this.sessionId = sessionId; }
+
+  setSession(sessionId) { this.sessionId = sessionId || ''; }
+
+  async login(email, password) {
+    const response = await fetch(`${this.baseUrl}/api/auth/login`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }),
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok || !body.sessionId) throw new Error(body.error || `Sign-in failed (${response.status}).`);
+    this.setSession(body.sessionId);
+    return body;
+  }
+
+  async restoreSession() {
+    const response = await fetch(`${this.baseUrl}/api/session`, { headers: this.sessionId ? { 'X-Alumhacks-Session': this.sessionId } : {} });
+    const body = await response.json().catch(() => ({}));
+    return response.ok && body.authenticated === true;
+  }
+
+  clearSession() {
+    const headers = this.sessionId ? { 'X-Alumhacks-Session': this.sessionId } : {};
+    this.sessionId = '';
+    return fetch(`${this.baseUrl}/api/session`, { method: 'DELETE', headers }).catch(() => {});
+  }
+
+  async request(query, variables = {}) {
+    const headers = { 'Content-Type': 'application/json', 'X-Alumhacks-Session': this.sessionId };
+    let response;
+    try {
+      response = await fetch(`${this.baseUrl}/api/graphql`, {
+        method: 'POST', headers, body: JSON.stringify({ query, variables }),
+      });
+    } catch {
+      throw new Error('Cannot reach the computer backend. Check the server URL, Wi-Fi, and firewall.');
+    }
+    let body;
+    try { body = await response.json(); } catch { throw new Error(`Backend returned an unreadable response (${response.status}).`); }
+    if (response.status === 401 && body?.code === 'SESSION_EXPIRED') {
+      this.sessionId = '';
+      const error = new Error(body.error || 'Your session has expired. Please sign in again.');
+      error.code = 'SESSION_EXPIRED';
+      throw error;
+    }
+    if (!response.ok) throw new Error(body?.errors?.map(error => error.message).join('; ') || body?.error || `Ginjer request failed (${response.status}).`);
+    if (body.errors?.length) throw new Error(body.errors.map(error => error.message).join('; '));
+    return body.data || {};
+  }
+
+  async getOrganisations(defaultId = '') {
+    const result = await this.request(queries.organisations);
+    const organisations = asArray(result.accounts).filter(item => item.isAccepted !== false && item.isActive !== false);
+    const preferred = organisations.find(item => item.organisationId === defaultId);
+    return preferred ? [preferred, ...organisations.filter(item => item !== preferred)] : organisations;
+  }
+
+  async getProjects(organisation) {
+    try {
+      const result = await this.request(queries.projects, { params: { organisationId: organisation.organisationId } });
+      const list = asArray(result.projectOverview);
+      if (list.length) return list;
+    } catch (error) {
+      console.warn('projectOverview query failed, trying projects fallback:', error.message);
+    }
+    try {
+      const result = await this.request('query ProjectListFallback($params: ParamInput!) { projects(params: $params) { _id name description } }', { params: { organisationId: organisation.organisationId } });
+      return asArray(result.projects);
+    } catch {
+      return [];
+    }
+  }
+
+  async getProjectData(organisation, project, { includeModules = true } = {}) {
+    if (!project || project._id === 'none') return { devices: [], modules: [], errors: [] };
+    const params = { organisationId: organisation.organisationId, projectId: project._id };
+    const [deviceResult, detailResult, moduleResult] = await Promise.allSettled([
+      this.request(queries.devices, { params }),
+      this.request(queries.details, { params }),
+      includeModules ? this.request(queries.modules, { params: { organisationId: organisation.organisationId } }) : Promise.resolve({ modules: [] }),
+    ]);
+    if (deviceResult.status === 'rejected') throw deviceResult.reason;
+    const listed = flattenDevices(deviceResult.value.projects);
+    const detailed = detailResult.status === 'fulfilled' ? flattenDevices(detailResult.value.projects) : [];
+    const detailsById = new Map(detailed.map(device => [device._id, device]));
+    const devices = listed.map(device => normalizeDevice({ ...device, ...(detailsById.get(device._id) || {}), projectName: project.name, projectId: project._id }));
+    const errors = [];
+    if (detailResult.status === 'rejected') errors.push(`Device details unavailable: ${detailResult.reason.message}`);
+    if (moduleResult.status === 'rejected') errors.push(`Downlink modules unavailable: ${moduleResult.reason.message}`);
+    return { devices, modules: moduleResult.status === 'fulfilled' ? asArray(moduleResult.value.modules) : [], errors };
+  }
+
+  async getOrganisationData(organisation, projects) {
+    const [results, moduleResult] = await Promise.all([
+      Promise.allSettled(projects.map(project => this.getProjectData(organisation, project, { includeModules: false }))),
+      this.request(queries.modules, { params: { organisationId: organisation.organisationId } }).then(value => ({ status: 'fulfilled', value }), reason => ({ status: 'rejected', reason })),
+    ]);
+    const successful = results.flatMap((result, index) => result.status === 'fulfilled' ? [{ project: projects[index], data: result.value }] : []);
+    if (!successful.length) {
+      const errors = results.filter(result => result.status === 'rejected').map(result => result.reason?.message || 'Project data could not be loaded.');
+      throw new Error(errors.join(' '));
+    }
+    const errors = results.flatMap(result => result.status === 'rejected' ? [result.reason?.message || 'A project could not be loaded.'] : result.value.errors);
+    if (moduleResult.status === 'rejected') errors.push(`Downlink modules unavailable: ${moduleResult.reason?.message || 'request failed'}`);
+    const devices = successful.flatMap(({ project, data }) => data.devices.map(device => ({ ...device, projectName: project.name || project._id, projectId: project._id })));
+    const modulesById = new Map(asArray(moduleResult.value?.modules).filter(module => module?._id).map(module => [module._id, module]));
+    return { devices, modules: [...modulesById.values()], errors };
+  }
+
+  async getDownlinkOptions(organisation, device) {
+    if (!device?.hardwareId || !device?.networkId) throw new Error('Ginjer did not return this device’s hardware and network IDs.');
+    const params = { organisationId: organisation.organisationId };
+    const [hardwareResult, moduleResult, networkResult] = await Promise.all([
+      this.request(queries.hardware, { params }),
+      this.request(queries.modules, { params }),
+      this.request(queries.networks, { params }),
+    ]);
+    return normalizeDownlinkOptions(
+      device,
+      organisation,
+      hardwareResult.hardwareList,
+      moduleResult.modules,
+      networkResult.networkList,
+    );
+  }
+
+  async sendDownlink(organisation, device, moduleId, value, options) {
+    if (!isMongoObjectId(device?.apiId)) throw new Error('Ginjer did not return a valid device database ID. Refresh the live device list and select the device again; MAC address and DevEUI are not accepted here.');
+    if (!isMongoObjectId(moduleId)) throw new Error('Select a valid DOWNLINK_INTERFACE module returned by Ginjer.');
+    if (!options?.interfaces?.some(item => item._id === moduleId)) throw new Error('Choose a downlink interface supported by this device hardware.');
+    if (!value || typeof value.value !== 'string' || !value.value.trim()) throw new Error('Enter a controller value.');
+    if (!Number.isInteger(value.port) || value.port < 1 || value.port > 223) throw new Error('Downlink port must be a whole number from 1 to 223.');
+    if (!['CLASS_A', 'CLASS_B', 'CLASS_C'].includes(value.class)) throw new Error('Choose a valid device class.');
+    if (typeof value.networkKeyId !== 'string' || !options.networkKeys?.some(key => key.id === value.networkKeyId)) throw new Error('Choose a downlink key for this device network.');
+    return this.request(queries.downlink, {
+      action: {
+        organisationId: organisation.organisationId,
+        deviceId: device.apiId,
+        downlinkInterfaceId: moduleId,
+        value: value.value,
+        timeout: 1000,
+        port: value.port,
+        class: value.class,
+        networkKeyId: value.networkKeyId,
+      },
+    });
+  }
+}
+
+export const demoDevices = [
+  { name: 'Cold Chain', id: 'ECFAF446947298', heard: '50 Mins', chips: [{ label: 'Moderate', status: 'amber' }, { label: 'Humid', status: 'blue' }], kind: 'snow', loc: 'Green park', output: 'Cold Room', outputs: [], position: { lat: 28.5584, lng: 77.2028, placeName: 'Green park' } },
+  { name: 'Level Sensor', id: 'ECFAF4469472DD', heard: '50 Mins', chips: [{ label: 'Empty', status: 'red' }, { label: 'Full', status: 'green' }], kind: 'water', loc: 'Tank 6', output: 'Reservoir A', outputs: [], position: { lat: 28.5494, lng: 77.2001, placeName: 'Tank 6' } },
+  { name: 'IO Controller', id: 'ECFAF44694729A', heard: '02 Feb 2024 02:25', chips: [{ label: 'ON', status: 'green' }, { label: 'Full', status: 'green' }], kind: 'controller', loc: 'Lab Room', output: 'Lab Room', outputs: [], position: { lat: 28.5492, lng: 77.2528, placeName: 'Lab Room' } },
+  { name: 'Panic Button', id: 'ECFAF44694729B', heard: '02 Feb 2024 02:15', chips: [{ label: 'SOS', status: 'red' }, { label: 'Low', status: 'amber' }], kind: 'alert', loc: 'John Doe · Block B', output: 'Block B, level 2', outputs: [], position: { lat: 28.5244, lng: 77.2167, placeName: 'John Doe · Block B' } },
+  { name: 'Air Quality Sensor', id: 'ECFAF4469472CC', heard: '02 Feb 2024 01:43', chips: [{ label: 'Poor', status: 'red' }, { label: 'Full', status: 'green' }], kind: 'air', loc: 'Saket', output: 'Saket Office', outputs: [], position: { lat: 28.6315, lng: 77.2167, placeName: 'Saket' } },
+  { name: 'Tektelic Sensor', id: 'T0005983-D01', heard: '12 Mins', chips: [{ label: 'LoRaWAN', status: 'green' }, { label: 'Online', status: 'green' }], kind: 'tektelic', loc: 'Tower A · Roof', output: 'Telemetry Feed', outputs: [], position: { lat: 28.5601, lng: 77.2105, placeName: 'Tower A · Roof' }, solutionName: 'uPark solution' },
+  { name: 'Agriculture Node', id: 'AGRI-SEN-089', heard: '5 Mins', chips: [{ label: 'Moisture: 42%', status: 'green' }, { label: 'Battery: 91%', status: 'green' }], kind: 'agriculture', loc: 'Agri Zone 3', output: 'Soil Probe', outputs: [], position: { lat: 28.5350, lng: 77.2250, placeName: 'Agri Zone 3' }, solutionName: 'Default solution' },
+];
+
+export const demoNotices = [
+  { title: 'Fill level - 80%', where: 'Green park', time: '8:15 AM', color: 'red', icon: 'notice-fill-critical', count: '1' },
+  { title: 'Fill Level - 85%', where: 'Saket', time: '7:20 AM', color: 'amber', icon: 'notice-fill-warning', count: '1' },
+  { title: 'Alert - SOS', where: 'John Doe', time: '7:10 AM', color: 'red', icon: 'notice-sos', count: '3' },
+  { title: 'Alert - Safe', where: 'John Smith', time: '7:05 AM', color: 'green', icon: 'notice-safe', count: '1' },
+  { title: 'Water Level - 80%', where: 'Tank 6', time: '6:50 AM', color: 'red', icon: 'notice-water-critical', count: '3' },
+  { title: 'Water Level - 50%', where: 'Tank 2', time: '6:32 AM', color: 'amber', icon: 'notice-water-safe', count: '1' },
+  { title: 'Light - On', where: 'Lab Room', time: '6:15 AM', color: 'green', icon: 'notice-light' },
+];

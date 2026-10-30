@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "Alumhacks Mobile",
+    "slug": "alumhacks-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "plugins": [
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Let Alumhacks access your photo library to choose a profile photo."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow Alumhacks to show your current position on the device map."
+        }
+      ]
+    ],
+    "android": {
+      "package": "com.alumhacks.mobile"
+    },
+    "ios": {
+      "bundleIdentifier": "com.alumhacks.mobile",
+      "infoPlist": {
+        "NSLocalNetworkUsageDescription": "Connect to Alumhacks running on your computer over Wi-Fi.",
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true
+        }
+      }
+    }
+  }
+}
