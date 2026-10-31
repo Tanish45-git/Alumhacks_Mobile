@@ -19,17 +19,18 @@ import {
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import * as SecureStore from 'expo-secure-store';
 import { demoDevices, demoNotices, GinjerClient, hasCoordinates, isMongoObjectId } from './src/api';
 
 const C = {
-  green: '#4E8A55', greenDark: '#32663B', greenPale: '#EAF3E9', ink: '#1C2820', muted: '#748078',
-  line: '#E4EAE3', canvas: '#F5F7F4', white: '#FFFFFF', red: '#D85F56', redPale: '#FCEDEA',
-  amber: '#D69A2D', amberPale: '#FFF4DF', blue: '#398FAE', bluePale: '#EAF4F7',
+  green: '#3E8055', greenDark: '#23563A', greenPale: '#E8F2E9', ink: '#17261D', muted: '#69786F',
+  line: '#E4EBE4', canvas: '#F4F7F3', white: '#FFFFFF', red: '#C9554D', redPale: '#FCEDEA',
+  amber: '#C58A2E', amberPale: '#FBF1DF', blue: '#347D96', bluePale: '#EAF3F6',
 };
+const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 const DEVICE_VISUALS = {
   snow: { icon: 'snowflake', color: '#3386A3', background: '#EAF5F8' },
   water: { icon: 'water-outline', color: '#398FAE', background: '#EAF4F7' },
@@ -166,15 +167,15 @@ function ProfileField({ label, value, onChangeText, icon, keyboardType, autoCapi
 }
 
 function ScreenHeader({ title, onBack, right }) {
-  return <View style={styles.pageHeader}>
+  return <View style={[styles.pageHeader, styles.pageHeaderPremium]}>
     <IconButton name="arrow-left" label="Back" onPress={onBack} color={C.ink} />
-    <Text numberOfLines={1} style={styles.pageTitle}>{title}</Text>
+    <Text numberOfLines={1} style={[styles.pageTitle, styles.pageTitlePremium]}>{title}</Text>
     <View style={styles.pageRight}>{right || null}</View>
   </View>;
 }
 
 function SearchField({ value, onChangeText, placeholder = 'Search devices', style, onSubmitEditing }) {
-  return <View style={[styles.searchField, style]}>
+  return <View style={[styles.searchField, styles.searchFieldPremium, style]}>
     <Icon name="magnify" size={20} color={C.muted} />
     <TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor="#A0A6A1" style={styles.searchInput} returnKeyType="search" accessibilityLabel={placeholder} onSubmitEditing={onSubmitEditing} />
     {value ? (
@@ -190,7 +191,7 @@ function SearchField({ value, onChangeText, placeholder = 'Search devices', styl
 
 function StatusChip({ label, status }) {
   const colors = status === 'red' ? [C.redPale, C.red] : status === 'amber' ? [C.amberPale, '#A87917'] : status === 'blue' ? [C.bluePale, C.blue] : [C.greenPale, C.greenDark];
-  return <View style={[styles.statusChip, { backgroundColor: colors[0] }]}><Text numberOfLines={1} style={[styles.statusChipText, { color: colors[1] }]}>{label}</Text></View>;
+  return <View style={[styles.statusChip, styles.statusChipPremium, { backgroundColor: colors[0] }]}><Text numberOfLines={1} style={[styles.statusChipText, styles.statusChipTextPremium, { color: colors[1] }]}>{label}</Text></View>;
 }
 
 function genericDeviceVisual(name) {
@@ -201,15 +202,15 @@ function genericDeviceVisual(name) {
 
 function DeviceThumb({ kind, name, size = 54 }) {
   const visual = DEVICE_VISUALS[kind] || genericDeviceVisual(name);
-  return <View style={[styles.deviceThumb, { width: size, height: size, backgroundColor: visual.background, borderColor: `${visual.color}30`, borderWidth: 1 }]}>
+  return <View style={[styles.deviceThumb, styles.deviceThumbPremium, { width: size, height: size, backgroundColor: visual.background, borderColor: `${visual.color}30`, borderWidth: 1 }]}>
     <Icon name={visual.icon} size={Math.round(size * 0.48)} color={visual.color} />
   </View>;
 }
 
 function DeviceCard({ device, onPress }) {
   const statusColor = device.chips?.[0]?.status === 'red' ? C.red : device.chips?.[0]?.status === 'amber' ? C.amber : C.green;
-  return <Pressable accessibilityRole="button" accessibilityLabel={`${device.name}, ${device.loc}. Open details`} onPress={onPress} style={({ pressed }) => [styles.deviceCard, styles.deviceCardLayoutOverride, pressed && styles.pressed]}>
-    <View style={styles.deviceCardTop}>
+  return <Pressable accessibilityRole="button" accessibilityLabel={`${device.name}, ${device.loc}. Open details`} onPress={onPress} style={({ pressed }) => [styles.deviceCard, styles.deviceCardLayoutOverride, styles.deviceCardPremium, pressed && styles.pressed]}>
+    <View style={[styles.deviceCardTop, styles.deviceCardTopPremium]}>
       <DeviceThumb kind={device.kind} name={device.name} size={50} />
       <View style={styles.deviceCardBody}>
         <Text numberOfLines={1} style={[styles.deviceName, styles.deviceNamePremium]}>{device.name}</Text>
@@ -218,14 +219,14 @@ function DeviceCard({ device, onPress }) {
       </View>
       <Icon name="chevron-right" color="#A1AAA2" size={20} />
     </View>
-    <View style={styles.deviceCardBottom}>
+    <View style={[styles.deviceCardBottom, styles.deviceCardBottomPremium]}>
       <View style={[styles.chipRow, styles.deviceCardChipRow]}>{device.chips?.slice(0, 2).map((chip, index) => <StatusChip key={`${chip.label}-${index}`} {...chip} />)}</View>
       <View style={styles.deviceLastHeard}>
         <View style={[styles.onlineDot, { backgroundColor: statusColor }]} />
         <Text numberOfLines={1} style={styles.deviceLastHeardText}>{device.heard || 'Last heard unknown'}</Text>
       </View>
     </View>
-    <Text numberOfLines={1} style={styles.deviceIdLine}>DEVICE ID  ·  {device.id || device.devEui || device.hardwareId || 'Not reported'}{device.hardwareType ? `  ·  ${device.hardwareType}` : ''}{device.networkId ? `  ·  Network ${device.networkId}` : ''}</Text>
+    <Text numberOfLines={1} style={[styles.deviceIdLine, styles.deviceIdLinePremium]}>DEVICE ID  ·  {device.id || device.devEui || device.hardwareId || 'Not reported'}{device.hardwareType ? `  ·  ${device.hardwareType}` : ''}{device.networkId ? `  ·  Network ${device.networkId}` : ''}</Text>
   </Pressable>;
 }
 
@@ -276,34 +277,41 @@ function BottomTabs({ current, onChange }) {
     ['analytics', 'Analytics', 'chart-box-outline'], ['profile', 'Profile', 'account-outline'],
   ];
   return <SafeAreaView edges={['bottom']} style={styles.tabSafeArea}>
-    <View style={styles.bottomTabs}>
+    <View style={[styles.bottomTabs, styles.bottomTabsPremium]}>
       {items.map(([id, label, icon]) => <Pressable key={id} accessibilityRole="tab" accessibilityState={{ selected: current === id }} onPress={() => onChange(id)} style={styles.tabButton}>
-        <View style={[styles.tabIconShell, current === id && styles.tabIconShellActive]}><Icon name={icon} size={21} color={current === id ? C.greenDark : '#9BA19D'} /></View>
-        <Text style={[styles.tabLabel, current === id && styles.tabLabelActive]}>{label}</Text>
+        <View style={[styles.tabIconShell, styles.tabIconShellPremium, current === id && styles.tabIconShellActive]}><Icon name={icon} size={21} color={current === id ? C.greenDark : '#9BA19D'} /></View>
+        <Text style={[styles.tabLabel, styles.tabLabelPremium, current === id && styles.tabLabelActive]}>{label}</Text>
       </Pressable>)}
     </View>
   </SafeAreaView>;
 }
 
 function ActionButton({ title, onPress, secondary = false, disabled = false, style }) {
-  return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={({ pressed }) => [secondary ? styles.secondaryButton : styles.primaryButton, disabled && styles.disabledButton, pressed && !disabled && styles.pressed, style]}>
+  return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={({ pressed }) => [secondary ? styles.secondaryButton : styles.primaryButton, styles.buttonPremium, disabled && styles.disabledButton, pressed && !disabled && styles.pressed, style]}>
     <Text style={[secondary ? styles.secondaryButtonText : styles.primaryButtonText, disabled && { color: '#A3AAA3' }]}>{title}</Text>
   </Pressable>;
 }
 
 function StatCard({ label, value, icon, tint = C.green }) {
-  return <View style={styles.statCard}><View style={[styles.statIcon, { backgroundColor: `${tint}18` }]}><Icon name={icon} size={19} color={tint} /></View><Text style={styles.statValue}>{value}</Text><Text style={styles.statLabel}>{label}</Text></View>;
+  return <View style={[styles.statCard, styles.statCardPremium]}><View style={[styles.statIcon, styles.statIconPremium, { backgroundColor: `${tint}18` }]}><Icon name={icon} size={19} color={tint} /></View><Text style={styles.statValue}>{value}</Text><Text style={styles.statLabel}>{label}</Text></View>;
 }
 
 function Sheet({ visible, title, subtitle, onClose, children, actions }) {
   return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
     <Pressable style={styles.modalScrim} onPress={onClose}>
-      <Pressable style={styles.sheet} onPress={event => event.stopPropagation()}>
+      <Pressable style={[styles.sheet, styles.sheetPremium]} onPress={event => event.stopPropagation()}>
         <View style={styles.sheetGrabber} />
-        <Text style={styles.sheetTitle}>{title}</Text>
-        {subtitle ? <Text style={styles.sheetSubtitle}>{subtitle}</Text> : null}
+        <View style={styles.sheetHeadingPremium}>
+          <View style={styles.sheetHeadingCopy}>
+            <Text style={[styles.sheetTitle, styles.sheetTitlePremium]}>{title}</Text>
+            {subtitle ? <Text style={[styles.sheetSubtitle, styles.sheetSubtitlePremium]}>{subtitle}</Text> : null}
+          </View>
+          <Pressable accessibilityRole="button" accessibilityLabel={`Close ${title}`} onPress={onClose} hitSlop={8} style={styles.sheetClose}>
+            <Icon name="close" size={18} color={C.muted} />
+          </Pressable>
+        </View>
         <ScrollView keyboardShouldPersistTaps="handled" style={styles.sheetContent}>{children}</ScrollView>
-        {actions ? <View style={styles.sheetActions}>{actions}</View> : null}
+        {actions ? <View style={[styles.sheetActions, styles.sheetActionsPremium]}>{actions}</View> : null}
       </Pressable>
     </Pressable>
   </Modal>;
@@ -787,6 +795,7 @@ function AppContent() {
         <TextInput value={serverInput} onChangeText={setServerInput} autoCapitalize="none" autoCorrect={false} keyboardType="url" placeholder="http://192.168.1.20:8787" placeholderTextColor="#A0A6A1" style={styles.textInput} onSubmitEditing={checkServer} accessibilityLabel="Backend server URL" />
         {setupError ? <Text style={styles.errorText}>{setupError}</Text> : null}
         <ActionButton title={loading ? 'Connecting…' : 'Open Alumhacks'} disabled={loading} onPress={checkServer} />
+        <ActionButton title="Explore the demo" secondary onPress={showDemo} style={styles.setupDemoButton} />
         <Text style={styles.footnote}>Keep your phone and computer on the same trusted Wi-Fi network.</Text>
       </View>
     </KeyboardAvoidingView>
@@ -795,28 +804,47 @@ function AppContent() {
   const renderLogin = () => <SafeAreaView style={styles.safeArea}>
     <StatusBar barStyle="dark-content" backgroundColor={C.white} />
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.loginScroll} keyboardShouldPersistTaps="handled">
-        <View style={styles.loginBrand}><Image source={require('./assets/reference/senra-logo.png')} style={styles.ginjerLogo} resizeMode="contain" /></View>
-        <Text style={styles.loginTagline}>A new way to Sense, Control and Automate</Text>
-        <Image source={require('./assets/reference/login-illustration.png')} style={styles.loginIllustration} resizeMode="contain" />
-        <View style={styles.loginSecurityNote}><Icon name="lock-outline" size={17} color={C.greenDark} /><Text style={styles.loginSecurityText}>Sign in with your individual Ginjer account. Passwords are used only for this sign-in.</Text></View>
-        <Text style={styles.fieldLabel}>Email ID*</Text>
-        <TextInput value={email} onChangeText={setEmail} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" autoComplete="email" placeholder="Email ID" placeholderTextColor="#9EA39F" style={styles.textInput} accessibilityLabel="Email ID" />
-        <Text style={[styles.fieldLabel, { marginTop: 14 }]}>Password*</Text>
-        <View style={styles.loginPasswordShell}>
-          <TextInput value={password} onChangeText={setPassword} secureTextEntry={!passwordVisible} autoComplete="password" placeholder="Password" placeholderTextColor="#9EA39F" style={[styles.textInput, styles.loginPasswordInput]} accessibilityLabel="Password" />
-          <Pressable accessibilityRole="button" accessibilityLabel={passwordVisible ? 'Hide password' : 'Show password'} onPress={() => setPasswordVisible(value => !value)} hitSlop={10} style={styles.passwordVisibilityButton}><Icon name={passwordVisible ? 'eye-off-outline' : 'eye-outline'} size={20} color={C.muted} /></Pressable>
+      <ScrollView contentContainerStyle={styles.loginScrollPremium} keyboardShouldPersistTaps="handled">
+        <View style={styles.loginHero}>
+          <View style={styles.loginHeroTop}>
+            <View style={styles.loginLogoCard}><Image source={require('./assets/reference/senra-logo.png')} style={styles.ginjerLogoPremium} resizeMode="contain" /></View>
+            <View style={styles.loginSecurePill}><View style={styles.loginSecureDot} /><Text style={styles.loginSecureLabel}>SECURE ACCESS</Text></View>
+          </View>
+          <Text style={styles.loginHeroEyebrow}>SMART DEVICE MANAGEMENT</Text>
+          <Text style={styles.loginHeroTitle}>Your connected{'\n'}world, in sync.</Text>
+          <Text style={styles.loginHeroCopy}>See what’s happening across your devices, wherever you are.</Text>
+          <View style={styles.loginArtwork}>
+            <Image source={require('./assets/reference/login-illustration.png')} style={styles.loginIllustrationPremium} resizeMode="contain" />
+            <View style={styles.loginArtworkBadge}><Icon name="access-point" size={15} color={C.greenDark} /><Text style={styles.loginArtworkBadgeText}>Your fleet, at a glance</Text></View>
+          </View>
         </View>
-        {loginError ? <Text accessibilityRole="alert" style={styles.errorText}>{loginError}</Text> : null}
-        <ActionButton title={loading ? 'Logging in…' : 'Log In'} disabled={loading} onPress={submitLogin} style={{ marginTop: 28 }} />
-        <Text style={styles.legalText}>By continuing, I accept the <Text style={styles.legalLinkText}>Terms and Conditions</Text> and <Text style={styles.legalLinkText}>Privacy Policy</Text>.</Text>
+        <View style={styles.loginFormCard}>
+          <Text style={styles.loginWelcome}>Welcome back</Text>
+          <Text style={styles.loginFormCopy}>Sign in with your Ginjer account to continue.</Text>
+          <Text style={[styles.fieldLabel, styles.authFieldLabel]}>Email address</Text>
+          <View style={styles.authInputShell}>
+            <Icon name="email-outline" size={19} color={C.muted} />
+            <TextInput value={email} onChangeText={setEmail} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" autoComplete="email" placeholder="you@example.com" placeholderTextColor="#A0AAA2" style={styles.authInput} accessibilityLabel="Email ID" />
+          </View>
+          <Text style={[styles.fieldLabel, styles.authFieldLabel, { marginTop: 16 }]}>Password</Text>
+          <View style={styles.authInputShell}>
+            <Icon name="lock-outline" size={19} color={C.muted} />
+            <TextInput value={password} onChangeText={setPassword} secureTextEntry={!passwordVisible} autoComplete="password" placeholder="Enter your password" placeholderTextColor="#A0AAA2" style={[styles.authInput, styles.authPasswordInput]} accessibilityLabel="Password" />
+            <Pressable accessibilityRole="button" accessibilityLabel={passwordVisible ? 'Hide password' : 'Show password'} onPress={() => setPasswordVisible(value => !value)} hitSlop={10} style={styles.authPasswordToggle}><Icon name={passwordVisible ? 'eye-off-outline' : 'eye-outline'} size={20} color={C.muted} /></Pressable>
+          </View>
+          {loginError ? <Text accessibilityRole="alert" style={styles.errorText}>{loginError}</Text> : null}
+          <ActionButton title={loading ? 'Signing in…' : 'Sign in'} disabled={loading} onPress={submitLogin} style={styles.loginSubmit} />
+          <View style={[styles.loginSecurityNote, styles.loginSecurityNotePremium]}><Icon name="shield-check-outline" size={17} color={C.greenDark} /><Text style={styles.loginSecurityText}>Your password is used only to sign in. Your session is stored securely on this device.</Text></View>
+          <Text style={styles.legalText}>Secure access to your Ginjer device network.</Text>
+          <Pressable accessibilityRole="button" onPress={() => setRoute('setup')} style={styles.changeBackendLink}><Icon name="server-network-outline" size={15} color={C.greenDark} /><Text style={styles.changeBackendText}>Change backend address</Text></Pressable>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   </SafeAreaView>;
 
   const renderDevices = () => <View style={styles.screen}>
-    <View style={styles.listTopBar}>
-      <View><Text style={styles.sectionTitle}>Devices</Text><Text style={styles.screenSubtitle}>Your connected fleet, at a glance</Text></View>
+    <View style={[styles.listTopBar, styles.listTopBarPremium]}>
+      <View><Text style={[styles.sectionTitle, styles.sectionTitlePremium]}>Devices</Text><Text style={styles.screenSubtitle}>Your connected fleet, at a glance</Text></View>
       <View style={styles.topActions}>
         <IconButton name="bell-outline" label="Notifications" onPress={() => { setPreviousRoute(route); setRoute('notifications'); }} color={C.ink} />
         <IconButton name="robot-outline" label="Automation" onPress={() => { setPreviousRoute(route); setRoute('automation'); }} color={C.ink} />
@@ -874,7 +902,7 @@ function AppContent() {
     const initial = coordinates[0]
       || (hasCoordinates({ position: projectPosition }) ? { latitude: Number(projectPosition.lat), longitude: Number(projectPosition.lng) } : { latitude: 22.9734, longitude: 78.6569 });
     return <View style={styles.mapScreen}>
-      <MapView ref={mapRef} key={`${full ? 'full' : 'detail'}-${route}`} style={StyleSheet.absoluteFill} initialRegion={{ ...initial, latitudeDelta: coordinates.length ? 2.5 : 24, longitudeDelta: coordinates.length ? 2.5 : 24 }} showsUserLocation={false} showsCompass userInterfaceStyle="light" customMapStyle={GOOGLE_MAPS_LIGHT_STYLE} onPress={handleMapPress}>
+      <MapView ref={mapRef} provider={GOOGLE_MAPS_API_KEY ? PROVIDER_GOOGLE : undefined} key={`${full ? 'full' : 'detail'}-${route}`} style={StyleSheet.absoluteFill} initialRegion={{ ...initial, latitudeDelta: coordinates.length ? 2.5 : 24, longitudeDelta: coordinates.length ? 2.5 : 24 }} showsUserLocation={false} showsCompass userInterfaceStyle="light" customMapStyle={GOOGLE_MAPS_LIGHT_STYLE} onPress={handleMapPress}>
         {mapDevices.map(device => <Marker key={device.apiId || device.id} coordinate={{ latitude: Number(device.position.lat), longitude: Number(device.position.lng) }} title={mapUsesPlaceholders ? `Sample placeholder · ${device.name}` : device.name} description={mapUsesPlaceholders ? 'Example location only · Not a live Ginjer device' : `${device.loc} · Last heard ${device.heard}`} onPress={() => { setSelectedCustomLocation(null); setSelectedMapDevice(device); if (!full) setSelectedDevice(device); }}>
           <View style={[styles.markerBubble, { backgroundColor: chipColor(device.chips?.[0]?.status) }]}><Icon name={kindIcon(device.kind, device.name)} size={17} color={C.white} /></View>
         </Marker>)}
@@ -883,7 +911,7 @@ function AppContent() {
           <View style={styles.currentLocationMarker}><View style={styles.currentLocationMarkerCenter} /></View>
         </Marker> : null}
       </MapView>
-      {full ? <ScreenHeader title="Device Map" onBack={onDetailBack} /> : <View style={styles.mapHeader}><Text style={styles.sectionTitle}>Locations</Text><View style={{ flexDirection: 'row' }}><IconButton name="bell-outline" label="Notifications" color={C.ink} onPress={() => { setPreviousRoute(route); setRoute('notifications'); }} /><IconButton name="crosshairs-gps" label="Show my current location" color={locating ? C.green : C.greenDark} onPress={showCurrentLocation} /></View></View>}
+      {full ? <ScreenHeader title="Device map" onBack={onDetailBack} /> : <View style={[styles.mapHeader, styles.mapHeaderPremium]}><View><Text style={[styles.sectionTitle, styles.sectionTitlePremium]}>Locations</Text><Text style={styles.mapProviderLabel}>{GOOGLE_MAPS_API_KEY ? 'Google Maps · live device locations' : 'Map view · live device locations'}</Text></View><View style={{ flexDirection: 'row' }}><IconButton name="bell-outline" label="Notifications" color={C.ink} onPress={() => { setPreviousRoute(route); setRoute('notifications'); }} /><IconButton name="crosshairs-gps" label={locating ? 'Finding your location' : 'Show my current location'} color={locating ? C.green : C.greenDark} onPress={showCurrentLocation} /></View></View>}
       {full ? <View style={[styles.mapOverlay, { top: 56 }]}>{mapSearch}</View> : <View style={styles.mapOverlay}>{mapSearch}</View>}
       {visibleMarkers.length === 0 ? <View style={styles.mapNotice}><Icon name="map-marker-off-outline" size={17} color={C.greenDark} /><Text style={styles.mapNoticeText}>Tap anywhere on the map or search a city to select a location.</Text></View> : mapUsesPlaceholders ? <View style={styles.mapNotice}><Icon name="information-outline" size={17} color={C.greenDark} /><Text style={styles.mapNoticeText}>Sample placeholders only — these are not live devices or confirmed locations. Tap a marker for its sample details.</Text></View> : null}
       <View style={styles.mapCount}><Icon name="map-marker-multiple-outline" color={C.greenDark} size={15} /><Text style={styles.mapCountText}>{mapUsesPlaceholders ? `${visibleMarkers.length} sample placeholders` : `${visibleMarkers.length} of ${devices.length} devices with coordinates`}</Text></View>
@@ -993,7 +1021,7 @@ function AppContent() {
       {device.outputs?.some(output => output.status === 'unknown') ? <Text style={[styles.infoNoteText, { marginHorizontal: 16, marginTop: 8 }]}>Unknown readings mean Ginjer has not reported those values yet. A queued downlink does not confirm a color change; check again after the device's next uplink.</Text> : null}
       <View style={styles.detailSectionHeader}><Text style={styles.sectionTitleSmall}>Location</Text><Pressable onPress={() => openFullMap('detail', device)}><Text style={styles.linkText}>View map</Text></Pressable></View>
       <View style={styles.miniMap}>
-        <MapView style={StyleSheet.absoluteFill} initialRegion={coords ? { latitude: Number(device.position.lat), longitude: Number(device.position.lng), latitudeDelta: 0.08, longitudeDelta: 0.08 } : { latitude: 22.9734, longitude: 78.6569, latitudeDelta: 24, longitudeDelta: 24 }} scrollEnabled={coords} zoomEnabled={coords} userInterfaceStyle="light" customMapStyle={GOOGLE_MAPS_LIGHT_STYLE}>
+        <MapView provider={GOOGLE_MAPS_API_KEY ? PROVIDER_GOOGLE : undefined} style={StyleSheet.absoluteFill} initialRegion={coords ? { latitude: Number(device.position.lat), longitude: Number(device.position.lng), latitudeDelta: 0.08, longitudeDelta: 0.08 } : { latitude: 22.9734, longitude: 78.6569, latitudeDelta: 24, longitudeDelta: 24 }} scrollEnabled={coords} zoomEnabled={coords} userInterfaceStyle="light" customMapStyle={GOOGLE_MAPS_LIGHT_STYLE}>
           {coords ? <Marker coordinate={{ latitude: Number(device.position.lat), longitude: Number(device.position.lng) }} title={device.name} description={device.loc} /> : null}
         </MapView>
         {!coords ? <View style={styles.miniMapMessage}><Icon name="map-marker-off-outline" size={17} color={C.greenDark} /><Text style={styles.miniMapText}>Coordinates were not returned for this device.</Text></View> : null}
@@ -1145,22 +1173,46 @@ function AppContent() {
         finally { setLoading(false); }
       };
       const selectedNetworkKey = downlinkNetworkKeys.find(key => key.id === downlinkNetworkKeyId);
-      return <Sheet visible title="Send Downlink" subtitle={`Live device: ${selectedDevice?.name || '—'} · Device ID ${selectedDevice?.id || selectedDevice?.devEui || selectedDevice?.hardwareId || 'unavailable'}`} onClose={() => setModal(null)} actions={<><ActionButton title="Cancel" secondary onPress={() => setModal(null)} /><ActionButton title={loading ? 'Sending…' : 'Send'} disabled={loading || downlinkOptionsLoading || !interfaces.length || !downlinkNetworkKeys.length} onPress={send} /></>}>
-        {downlinkOptionsLoading ? <Text style={styles.sheetEmpty}>Loading device-compatible controllers and network keys…</Text> : null}
-        {downlinkOptionsError ? <Text style={styles.errorText}>{downlinkOptionsError}</Text> : null}
-        <Text style={styles.fieldLabel}>Downlink interface</Text>
-        {interfaces.length ? interfaces.map(item => <OptionRow key={item._id} title={item.label || item._id} selected={downlinkModule === item._id} onPress={() => setDownlinkModule(item._id)} radio />) : !downlinkOptionsLoading && !downlinkOptionsError ? <Text style={styles.sheetEmpty}>This device's hardware has no compatible downlink controller.</Text> : null}
-        <Text style={[styles.fieldLabel, { marginTop: 14 }]}>Controller value</Text>
-        <TextInput value={downlinkControllerValue} onChangeText={setDownlinkControllerValue} autoCapitalize="none" autoCorrect={false} style={styles.textInput} accessibilityLabel="Controller value" placeholder={isColorController ? 'Red, Blue, Green, or Off' : 'Enter value for selected controller'} placeholderTextColor="#A0A6A1" />
-        {isColorController ? <Text style={[styles.infoNoteText, { marginTop: 7 }]}>Set Color accepts only Red, Blue, Green, or Off. Ginjer must still deliver the command to the device before the light changes.</Text> : null}
-        <View style={styles.downlinkFieldsRow}>
-          <View style={{ flex: 1 }}><Text style={[styles.fieldLabel, { marginTop: 12 }]}>Downlink port</Text><TextInput value={downlinkPort} onChangeText={setDownlinkPort} keyboardType="number-pad" style={styles.textInput} accessibilityLabel="Downlink port" /></View>
-          <View style={{ flex: 1 }}><Text style={[styles.fieldLabel, { marginTop: 12 }]}>Class</Text><View style={styles.downlinkClassRow}>{['CLASS_A', 'CLASS_B', 'CLASS_C'].map(item => <Pressable key={item} accessibilityRole="radio" accessibilityState={{ selected: downlinkClass === item }} onPress={() => setDownlinkClass(item)} style={[styles.downlinkClassOption, downlinkClass === item && styles.downlinkClassOptionSelected]}><Text style={[styles.downlinkClassText, downlinkClass === item && styles.downlinkClassTextSelected]}>Class {item.slice(-1)}</Text></Pressable>)}</View></View>
+      return <Sheet visible title="Send downlink" subtitle="Send a command to this device." onClose={() => setModal(null)} actions={<><ActionButton title="Cancel" secondary onPress={() => setModal(null)} style={styles.sheetActionButton} /><ActionButton title={loading ? 'Sending…' : 'Send command'} disabled={loading || downlinkOptionsLoading || !interfaces.length || !downlinkNetworkKeys.length} onPress={send} style={styles.sheetActionButton} /></>}>
+        <View style={styles.downlinkDeviceCard}>
+          <View style={styles.downlinkDeviceIcon}><Icon name={kindIcon(selectedDevice?.kind, selectedDevice?.name)} size={21} color={C.greenDark} /></View>
+          <View style={styles.downlinkDeviceCopy}>
+            <Text numberOfLines={1} style={styles.downlinkDeviceName}>{selectedDevice?.name || 'Unknown device'}</Text>
+            <Text numberOfLines={1} style={styles.downlinkDeviceId}>DEVICE ID · {selectedDevice?.id || selectedDevice?.devEui || selectedDevice?.hardwareId || 'Unavailable'}</Text>
+          </View>
+          <View style={styles.downlinkLivePill}><View style={styles.downlinkLiveDot} /><Text style={styles.downlinkLiveText}>LIVE</Text></View>
         </View>
-        <Text style={[styles.fieldLabel, { marginTop: 12 }]}>Downlink network key</Text>
-        <Pressable accessibilityRole="button" onPress={() => setModal('downlink-keys')} style={styles.automationFilter}><Text style={styles.automationFilterText}>{selectedNetworkKey?.name || 'Choose a configured network key'}</Text><Icon name="chevron-down" size={17} color={C.muted} /></Pressable>
-        <Text style={[styles.infoNoteText, { marginTop: 8 }]}>{relayController ? 'Relay 1 is preselected only when supported by this device hardware. Ginjer will queue the command; confirm the relay changed in the next device uplink.' : 'This sends the selected controller value using the device network’s configured key. Confirm execution in the next device uplink.'}</Text>
-        {!isConnected ? <Text style={styles.footnote}>Connect to Ginjer to send a real device command.</Text> : null}
+        {downlinkOptionsLoading ? <View style={styles.downlinkLoading}><ActivityIndicator size="small" color={C.green} /><Text style={styles.downlinkLoadingText}>Loading device-compatible controls…</Text></View> : null}
+        {downlinkOptionsError ? <View style={styles.downlinkError}><Icon name="alert-circle-outline" size={18} color={C.red} /><Text style={styles.downlinkErrorText}>{downlinkOptionsError}</Text></View> : null}
+        <Text style={styles.downlinkSectionLabel}>CONTROL INTERFACE</Text>
+        {interfaces.length ? <View style={styles.downlinkInterfaceList}>{interfaces.map(item => {
+          const selected = downlinkModule === item._id;
+          return <Pressable key={item._id} accessibilityRole="radio" accessibilityState={{ selected }} onPress={() => setDownlinkModule(item._id)} style={[styles.downlinkInterfaceRow, selected && styles.downlinkInterfaceRowSelected]}>
+            <View style={[styles.downlinkInterfaceIcon, selected && styles.downlinkInterfaceIconSelected]}><Icon name={relayController ? 'electric-switch' : 'tune-variant'} size={18} color={selected ? C.greenDark : C.muted} /></View>
+            <Text numberOfLines={1} style={[styles.downlinkInterfaceName, selected && styles.downlinkInterfaceNameSelected]}>{item.label || item._id}</Text>
+            <Icon name={selected ? 'radiobox-marked' : 'radiobox-blank'} size={21} color={selected ? C.greenDark : '#A0AAA2'} />
+          </Pressable>;
+        })}</View> : !downlinkOptionsLoading && !downlinkOptionsError ? <Text style={styles.downlinkEmpty}>This device has no compatible downlink controller.</Text> : null}
+        <Text style={[styles.downlinkSectionLabel, { marginTop: 20 }]}>COMMAND VALUE</Text>
+        {isColorController ? <View style={styles.downlinkColorChoices}>{['Red', 'Blue', 'Green', 'Off'].map(value => {
+          const selected = downlinkControllerValue.toLowerCase() === value.toLowerCase();
+          return <Pressable key={value} accessibilityRole="radio" accessibilityState={{ selected }} onPress={() => setDownlinkControllerValue(value)} style={[styles.downlinkColorChoice, selected && styles.downlinkColorChoiceSelected]}>
+            {value !== 'Off' ? <View style={[styles.downlinkColorDot, { backgroundColor: value.toLowerCase() }]} /> : <Icon name="power" size={15} color={selected ? C.greenDark : C.muted} />}
+            <Text style={[styles.downlinkColorText, selected && styles.downlinkColorTextSelected]}>{value}</Text>
+          </Pressable>;
+        })}</View> : <TextInput value={downlinkControllerValue} onChangeText={setDownlinkControllerValue} autoCapitalize="none" autoCorrect={false} style={[styles.textInput, styles.downlinkValueInput]} accessibilityLabel="Controller value" placeholder="Enter a value for this controller" placeholderTextColor="#A0AAA2" />}
+        {isColorController ? <Text style={styles.downlinkHelper}>Choose a supported color. The change is confirmed after the device sends its next uplink.</Text> : null}
+        <View style={styles.downlinkFieldsRow}>
+          <View style={styles.downlinkFieldColumn}><Text style={styles.downlinkSectionLabel}>PORT</Text><View style={styles.downlinkPortShell}><TextInput value={downlinkPort} onChangeText={setDownlinkPort} keyboardType="number-pad" style={styles.downlinkPortInput} accessibilityLabel="Downlink port" /><Text style={styles.downlinkPortHint}>1–223</Text></View></View>
+          <View style={styles.downlinkFieldColumn}><Text style={styles.downlinkSectionLabel}>CLASS</Text><View style={styles.downlinkClassRow}>{['CLASS_A', 'CLASS_B', 'CLASS_C'].map(item => <Pressable key={item} accessibilityRole="radio" accessibilityState={{ selected: downlinkClass === item }} onPress={() => setDownlinkClass(item)} style={[styles.downlinkClassOption, downlinkClass === item && styles.downlinkClassOptionSelected]}><Text style={[styles.downlinkClassText, downlinkClass === item && styles.downlinkClassTextSelected]}>{item.slice(-1)}</Text></Pressable>)}</View></View>
+        </View>
+        <Text style={[styles.downlinkSectionLabel, { marginTop: 20 }]}>NETWORK KEY</Text>
+        <Pressable accessibilityRole="button" onPress={() => setModal('downlink-keys')} style={styles.downlinkKeySelector}>
+          <View style={styles.downlinkKeyIcon}><Icon name="key-outline" size={17} color={C.greenDark} /></View>
+          <Text numberOfLines={1} style={styles.downlinkKeyText}>{selectedNetworkKey?.name || 'Choose a configured network key'}</Text>
+          <Icon name="chevron-down" size={19} color={C.muted} />
+        </Pressable>
+        <View style={styles.downlinkSafetyNote}><Icon name="information-outline" size={16} color={C.greenDark} /><Text style={styles.downlinkSafetyText}>{relayController ? 'This queues a relay command. Verify the relay state after the device’s next uplink.' : 'This queues the command for delivery. Device execution is confirmed by its next uplink.'}</Text></View>
       </Sheet>;
     }
     return null;
@@ -1257,4 +1309,104 @@ const styles = StyleSheet.create({
   tabIconShell: { width: 38, height: 27, alignItems: 'center', justifyContent: 'center', borderRadius: 14 },
   tabIconShellActive: { backgroundColor: C.greenPale },
   toast: { position: 'absolute', left: 20, right: 20, bottom: 74, zIndex: 20, minHeight: 38, paddingHorizontal: 14, paddingVertical: 10, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: '#26312B', elevation: 5 }, toastText: { color: C.white, fontSize: 11, textAlign: 'center' }, loadingOverlay: { ...StyleSheet.absoluteFillObject, zIndex: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8F9F7AA' },
+  buttonPremium: { minHeight: 52, borderRadius: 15 },
+  pageHeaderPremium: { minHeight: 58, paddingHorizontal: 14, backgroundColor: C.canvas },
+  pageTitlePremium: { textAlign: 'left', fontSize: 18, letterSpacing: -0.3 },
+  listTopBarPremium: { paddingHorizontal: 20, paddingTop: 15, paddingBottom: 8 },
+  sectionTitlePremium: { fontSize: 24, lineHeight: 30, letterSpacing: -0.5 },
+  searchFieldPremium: { minHeight: 52, paddingHorizontal: 15, borderColor: '#E8EDE7', borderRadius: 16, shadowOpacity: 0.025, elevation: 0 },
+  statusChipPremium: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 9 },
+  statusChipTextPremium: { fontSize: 10, lineHeight: 13, fontWeight: '700' },
+  deviceCardPremium: { gap: 13, padding: 15, borderRadius: 20, borderColor: '#E8EDE7', shadowOpacity: 0.045, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
+  deviceThumbPremium: { borderRadius: 16 },
+  deviceCardTopPremium: { gap: 12 },
+  deviceCardBottomPremium: { minHeight: 30, paddingTop: 7, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.line },
+  deviceIdLinePremium: { paddingTop: 9, fontSize: 9, letterSpacing: 0.35 },
+  bottomTabsPremium: { minHeight: 69, paddingTop: 6, borderTopColor: '#E9EEE8', shadowColor: '#203628', shadowOpacity: 0.05, shadowRadius: 9, shadowOffset: { width: 0, height: -3 }, elevation: 8 },
+  tabIconShellPremium: { width: 44, height: 30, borderRadius: 16 },
+  tabLabelPremium: { fontSize: 10, lineHeight: 14 },
+  statCardPremium: { minHeight: 112, padding: 14, borderWidth: 1, borderColor: C.line, borderRadius: 18, shadowOpacity: 0.025, elevation: 0 },
+  statIconPremium: { width: 36, height: 36, borderRadius: 12 },
+  sheetPremium: { maxHeight: '90%', paddingTop: 10, paddingHorizontal: 20, paddingBottom: Platform.OS === 'ios' ? 28 : 18, borderTopLeftRadius: 28, borderTopRightRadius: 28, shadowColor: '#101B13', shadowOpacity: 0.16, shadowRadius: 28, shadowOffset: { width: 0, height: -8 }, elevation: 18 },
+  sheetHeadingPremium: { minHeight: 50, marginBottom: 14, flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  sheetHeadingCopy: { flex: 1, minWidth: 0 },
+  sheetTitlePremium: { color: C.ink, fontSize: 22, lineHeight: 28, fontWeight: '800', letterSpacing: -0.5 },
+  sheetSubtitlePremium: { alignSelf: 'flex-start', maxWidth: '100%', marginTop: 4, marginBottom: 0, fontSize: 12, lineHeight: 17, textAlign: 'left' },
+  sheetClose: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 18, backgroundColor: C.canvas },
+  sheetActionsPremium: { paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.line },
+  loginScrollPremium: { flexGrow: 1, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 30, backgroundColor: C.canvas },
+  loginHero: { overflow: 'hidden', padding: 20, borderRadius: 26, backgroundColor: '#204D36' },
+  loginHeroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  loginLogoCard: { width: 154, height: 45, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: C.white },
+  ginjerLogoPremium: { width: 143, height: 39 },
+  loginSecurePill: { minHeight: 30, paddingHorizontal: 9, flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: '#FFFFFF38', borderRadius: 20, backgroundColor: '#FFFFFF14' },
+  loginSecureDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#8EE0A1' },
+  loginSecureLabel: { color: '#E5F0E7', fontSize: 8, fontWeight: '800', letterSpacing: 0.55 },
+  loginHeroEyebrow: { marginTop: 22, color: '#B8D5BD', fontSize: 9, fontWeight: '800', letterSpacing: 1.5 },
+  loginHeroTitle: { marginTop: 7, color: C.white, fontSize: 29, lineHeight: 34, fontWeight: '800', letterSpacing: -0.8 },
+  loginHeroCopy: { maxWidth: 270, marginTop: 6, color: '#D8E6DA', fontSize: 12, lineHeight: 18 },
+  loginArtwork: { height: 140, marginTop: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 19, backgroundColor: '#EDF3E9' },
+  loginIllustrationPremium: { width: '94%', height: 132 },
+  loginArtworkBadge: { position: 'absolute', right: 9, bottom: 9, paddingHorizontal: 9, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderColor: '#E5EDE4', borderRadius: 12, backgroundColor: '#FFFFFFF2' },
+  loginArtworkBadgeText: { color: C.greenDark, fontSize: 9, fontWeight: '700' },
+  loginFormCard: { zIndex: 1, marginTop: 14, padding: 20, borderWidth: 1, borderColor: '#E7ECE6', borderRadius: 24, backgroundColor: C.white, shadowColor: '#193322', shadowOpacity: 0.045, shadowRadius: 14, shadowOffset: { width: 0, height: 5 }, elevation: 2 },
+  loginWelcome: { color: C.ink, fontSize: 23, lineHeight: 29, fontWeight: '800', letterSpacing: -0.5 },
+  loginFormCopy: { marginTop: 4, marginBottom: 20, color: C.muted, fontSize: 12, lineHeight: 18 },
+  authFieldLabel: { marginBottom: 8, color: '#34463A', fontSize: 12, fontWeight: '700' },
+  authInputShell: { minHeight: 54, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 11, borderWidth: 1, borderColor: '#E1E8E0', borderRadius: 15, backgroundColor: '#FAFBF9' },
+  authInput: { flex: 1, minWidth: 0, height: 52, padding: 0, color: C.ink, fontSize: 14 },
+  authPasswordInput: { paddingRight: 0 },
+  authPasswordToggle: { width: 36, height: 44, alignItems: 'center', justifyContent: 'center' },
+  loginSubmit: { minHeight: 54, marginTop: 22, borderRadius: 15, backgroundColor: C.greenDark, shadowColor: C.greenDark, shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
+  loginSecurityNotePremium: { marginTop: 16, marginBottom: 0, padding: 12, borderWidth: 1, borderColor: '#E3EDE2', borderRadius: 14, backgroundColor: '#F3F8F1' },
+  setupDemoButton: { marginTop: 10, borderColor: '#DCE7DB', backgroundColor: '#F8FAF7' },
+  changeBackendLink: { alignSelf: 'center', marginTop: 13, padding: 6, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  changeBackendText: { color: C.greenDark, fontSize: 11, fontWeight: '700' },
+  downlinkDeviceCard: { minHeight: 68, marginBottom: 22, padding: 11, flexDirection: 'row', alignItems: 'center', gap: 11, borderWidth: 1, borderColor: '#E5ECE5', borderRadius: 17, backgroundColor: '#F8FAF7' },
+  downlinkDeviceIcon: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: C.greenPale },
+  downlinkDeviceCopy: { flex: 1, minWidth: 0 },
+  downlinkDeviceName: { color: C.ink, fontSize: 13, fontWeight: '800' },
+  downlinkDeviceId: { marginTop: 3, color: C.muted, fontSize: 8, fontWeight: '600', letterSpacing: 0.3 },
+  downlinkLivePill: { paddingHorizontal: 8, paddingVertical: 5, flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 12, backgroundColor: '#E9F4EB' },
+  downlinkLiveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.green },
+  downlinkLiveText: { color: C.greenDark, fontSize: 8, fontWeight: '800', letterSpacing: 0.5 },
+  downlinkLoading: { minHeight: 44, marginBottom: 16, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 9, borderRadius: 12, backgroundColor: C.greenPale },
+  downlinkLoadingText: { color: C.greenDark, fontSize: 11, fontWeight: '600' },
+  downlinkError: { marginBottom: 14, padding: 12, flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderRadius: 12, backgroundColor: C.redPale },
+  downlinkErrorText: { flex: 1, color: C.red, fontSize: 11, lineHeight: 16 },
+  downlinkSectionLabel: { color: '#67766B', fontSize: 9, fontWeight: '800', letterSpacing: 1 },
+  downlinkInterfaceList: { marginTop: 9, overflow: 'hidden', borderWidth: 1, borderColor: '#E6ECE5', borderRadius: 16, backgroundColor: C.white },
+  downlinkInterfaceRow: { minHeight: 58, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#EBF0EA' },
+  downlinkInterfaceRowSelected: { backgroundColor: '#F2F7F1' },
+  downlinkInterfaceIcon: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', borderRadius: 11, backgroundColor: '#F1F4F0' },
+  downlinkInterfaceIconSelected: { backgroundColor: '#E3F0E4' },
+  downlinkInterfaceName: { flex: 1, color: C.ink, fontSize: 13, fontWeight: '600' },
+  downlinkInterfaceNameSelected: { color: C.greenDark, fontWeight: '800' },
+  downlinkEmpty: { marginTop: 9, padding: 15, borderWidth: 1, borderColor: C.line, borderRadius: 14, color: C.muted, fontSize: 12, lineHeight: 18, textAlign: 'center', backgroundColor: '#FAFBF9' },
+  downlinkColorChoices: { marginTop: 9, flexDirection: 'row', gap: 7 },
+  downlinkColorChoice: { minHeight: 45, flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, borderWidth: 1, borderColor: '#E3E9E2', borderRadius: 13, backgroundColor: C.white },
+  downlinkColorChoiceSelected: { borderColor: '#B9D2BC', backgroundColor: '#EAF3E9' },
+  downlinkColorDot: { width: 9, height: 9, borderRadius: 5 },
+  downlinkColorText: { color: C.muted, fontSize: 10, fontWeight: '600' },
+  downlinkColorTextSelected: { color: C.greenDark, fontWeight: '800' },
+  downlinkHelper: { marginTop: 7, color: C.muted, fontSize: 10, lineHeight: 15 },
+  downlinkValueInput: { minHeight: 54, marginTop: 9, borderColor: '#E1E8E0', borderRadius: 14, backgroundColor: '#FAFBF9' },
+  downlinkFieldsRow: { marginTop: 20, flexDirection: 'row', alignItems: 'flex-end', gap: 14 },
+  downlinkFieldColumn: { flex: 1, minWidth: 0 },
+  downlinkPortShell: { minHeight: 48, marginTop: 8, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: '#E1E8E0', borderRadius: 13, backgroundColor: '#FAFBF9' },
+  downlinkPortInput: { flex: 1, minWidth: 0, height: 46, padding: 0, color: C.ink, fontSize: 16, fontWeight: '700' },
+  downlinkPortHint: { color: '#A0AAA2', fontSize: 9, fontWeight: '600' },
+  downlinkClassRow: { minHeight: 48, marginTop: 8, padding: 4, flexDirection: 'row', gap: 3, borderWidth: 1, borderColor: '#E1E8E0', borderRadius: 13, backgroundColor: '#FAFBF9' },
+  downlinkClassOption: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 9 },
+  downlinkClassOptionSelected: { backgroundColor: '#E5F0E5' },
+  downlinkClassText: { color: C.muted, fontSize: 12, fontWeight: '700' },
+  downlinkClassTextSelected: { color: C.greenDark, fontWeight: '800' },
+  downlinkKeySelector: { minHeight: 52, marginTop: 8, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#E1E8E0', borderRadius: 14, backgroundColor: '#FAFBF9' },
+  downlinkKeyIcon: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: C.greenPale },
+  downlinkKeyText: { flex: 1, color: C.ink, fontSize: 11, fontWeight: '600' },
+  downlinkSafetyNote: { marginTop: 16, marginBottom: 5, padding: 12, flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderWidth: 1, borderColor: '#E5ECE4', borderRadius: 14, backgroundColor: '#F5F8F4' },
+  downlinkSafetyText: { flex: 1, color: '#5D6D61', fontSize: 10, lineHeight: 15 },
+  sheetActionButton: { flex: 1 },
+  mapHeaderPremium: { height: 64, paddingLeft: 18, paddingRight: 10, backgroundColor: '#FFFFFFF5' },
+  mapProviderLabel: { marginTop: 1, color: C.muted, fontSize: 10 },
 });
