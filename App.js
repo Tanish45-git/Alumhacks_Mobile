@@ -26,9 +26,9 @@ import * as SecureStore from 'expo-secure-store';
 import { demoDevices, demoNotices, GinjerClient, hasCoordinates, isMongoObjectId } from './src/api';
 
 const C = {
-  green: '#82AE25', greenDark: '#638B1B', greenPale: '#F2F7E9', ink: '#202624', muted: '#858D87',
-  line: '#E8ECE6', canvas: '#F8F9F7', white: '#FFFFFF', red: '#E9685E', redPale: '#FFF0EE',
-  amber: '#E5AE37', amberPale: '#FFF7E5', blue: '#38A1C5', bluePale: '#EAF6FA',
+  green: '#4E8A55', greenDark: '#32663B', greenPale: '#EAF3E9', ink: '#1C2820', muted: '#748078',
+  line: '#E4EAE3', canvas: '#F5F7F4', white: '#FFFFFF', red: '#D85F56', redPale: '#FCEDEA',
+  amber: '#D69A2D', amberPale: '#FFF4DF', blue: '#398FAE', bluePale: '#EAF4F7',
 };
 const DEVICE_IMAGES = {
   snow: require('./assets/reference/device-cold-chain.png'),
@@ -185,24 +185,24 @@ function DeviceThumb({ kind, size = 54 }) {
 
 function DeviceCard({ device, onPress }) {
   const statusColor = device.chips?.[0]?.status === 'red' ? C.red : device.chips?.[0]?.status === 'amber' ? C.amber : C.green;
-  return <Pressable accessibilityRole="button" accessibilityLabel={`${device.name}, ${device.loc}. Open details`} onPress={onPress} style={({ pressed }) => [styles.deviceCard, pressed && styles.pressed]}>
-    <DeviceThumb kind={device.kind} />
-    <View style={styles.deviceCardBody}>
-      <Text numberOfLines={1} style={styles.deviceName}>{device.name}</Text>
+  return <Pressable accessibilityRole="button" accessibilityLabel={`${device.name}, ${device.loc}. Open details`} onPress={onPress} style={({ pressed }) => [styles.deviceCard, styles.deviceCardLayoutOverride, pressed && styles.pressed]}>
+    <View style={styles.deviceCardTop}>
+      <DeviceThumb kind={device.kind} size={50} />
+      <View style={styles.deviceCardBody}>
+        <Text numberOfLines={1} style={styles.deviceName}>{device.name}</Text>
         {device.projectName || device.solutionName ? <Text numberOfLines={1} style={styles.deviceProject}>{device.projectName || device.solutionName}</Text> : null}
-      <Text numberOfLines={1} style={styles.deviceLocation}><Icon name="map-marker-outline" size={12} color={C.muted} /> {device.loc}</Text>
-      <View style={styles.chipRow}>{device.chips?.slice(0, 2).map((chip, index) => <StatusChip key={`${chip.label}-${index}`} {...chip} />)}</View>
+        <Text numberOfLines={1} style={styles.deviceLocation}><Icon name="map-marker-outline" size={13} color={C.muted} /> {device.loc}</Text>
+      </View>
+      <Icon name="chevron-right" color="#A1AAA2" size={20} />
     </View>
-    <View style={styles.deviceCardMeta}>
-      <View style={styles.deviceMetaHeading}><View style={[styles.onlineDot, { backgroundColor: statusColor }]} /><Text style={styles.lastLabel}>{device.chips?.[0]?.label || 'Status'}</Text></View>
-      <Text style={styles.lastLabel}>Device ID</Text>
-      <Text numberOfLines={2} style={styles.lastTime}>{device.id || device.devEui || device.hardwareId || 'Not reported'}</Text>
-      {device.hardwareType ? <Text numberOfLines={2} style={styles.lastLabel}>{device.hardwareType}</Text> : null}
-      {device.networkId ? <Text numberOfLines={1} style={styles.lastLabel}>Network · {device.networkId}</Text> : null}
-      <Text style={styles.lastLabel}>Last heard</Text>
-      <Text numberOfLines={2} style={styles.lastTime}>{device.heard || 'Unknown'}</Text>
-      <Icon name="chevron-right" color={C.green} size={18} style={{ marginTop: 3 }} />
+    <View style={styles.deviceCardBottom}>
+      <View style={[styles.chipRow, styles.deviceCardChipRow]}>{device.chips?.slice(0, 2).map((chip, index) => <StatusChip key={`${chip.label}-${index}`} {...chip} />)}</View>
+      <View style={styles.deviceLastHeard}>
+        <View style={[styles.onlineDot, { backgroundColor: statusColor }]} />
+        <Text numberOfLines={1} style={styles.deviceLastHeardText}>{device.heard || 'Last heard unknown'}</Text>
+      </View>
     </View>
+    <Text numberOfLines={1} style={styles.deviceIdLine}>DEVICE ID  ·  {device.id || device.devEui || device.hardwareId || 'Not reported'}{device.hardwareType ? `  ·  ${device.hardwareType}` : ''}{device.networkId ? `  ·  Network ${device.networkId}` : ''}</Text>
   </Pressable>;
 }
 
@@ -255,7 +255,7 @@ function BottomTabs({ current, onChange }) {
   return <SafeAreaView edges={['bottom']} style={styles.tabSafeArea}>
     <View style={styles.bottomTabs}>
       {items.map(([id, label, icon]) => <Pressable key={id} accessibilityRole="tab" accessibilityState={{ selected: current === id }} onPress={() => onChange(id)} style={styles.tabButton}>
-        <Icon name={icon} size={22} color={current === id ? C.greenDark : '#9BA19D'} />
+        <View style={[styles.tabIconShell, current === id && styles.tabIconShellActive]}><Icon name={icon} size={21} color={current === id ? C.greenDark : '#9BA19D'} /></View>
         <Text style={[styles.tabLabel, current === id && styles.tabLabelActive]}>{label}</Text>
       </Pressable>)}
     </View>
@@ -793,7 +793,7 @@ function AppContent() {
 
   const renderDevices = () => <View style={styles.screen}>
     <View style={styles.listTopBar}>
-      <Text style={styles.sectionTitle}>Devices</Text>
+      <View><Text style={styles.sectionTitle}>Devices</Text><Text style={styles.screenSubtitle}>Your connected fleet, at a glance</Text></View>
       <View style={styles.topActions}>
         <IconButton name="bell-outline" label="Notifications" onPress={() => { setPreviousRoute(route); setRoute('notifications'); }} color={C.ink} />
         <IconButton name="robot-outline" label="Automation" onPress={() => { setPreviousRoute(route); setRoute('automation'); }} color={C.ink} />
@@ -805,6 +805,31 @@ function AppContent() {
       <View style={{ flex: 1, marginLeft: 9 }}><Text style={styles.selectorCaption}>PROJECT</Text><Text numberOfLines={1} style={styles.selectorName}>{activeProject?.name || 'Demo Project'}</Text></View>
       <Icon name="chevron-down" size={19} color={C.muted} />
     </Pressable>
+    <View style={styles.fleetOverview}>
+      <View style={styles.fleetOverviewHeading}>
+        <Text style={styles.fleetEyebrow}>FLEET OVERVIEW</Text>
+        <View style={[styles.connectionPill, isConnected ? styles.connectionPillLive : styles.connectionPillDemo]}>
+          <View style={[styles.connectionDot, { backgroundColor: isConnected ? '#8FD694' : '#FFC56F' }]} />
+          <Text style={styles.connectionLabel}>{isConnected ? 'LIVE' : 'PREVIEW'}</Text>
+        </View>
+      </View>
+      <View style={styles.fleetStats}>
+        <View style={styles.fleetStat}>
+          <Text style={styles.fleetStatValue}>{devices.length}</Text>
+          <Text style={styles.fleetStatLabel}>Total devices</Text>
+        </View>
+        <View style={styles.fleetStatDivider} />
+        <View style={styles.fleetStat}>
+          <Text style={[styles.fleetStatValue, { color: '#FFD18A' }]}>{devices.filter(device => device.chips?.some(chip => ['red', 'amber'].includes(chip.status))).length}</Text>
+          <Text style={styles.fleetStatLabel}>Need attention</Text>
+        </View>
+        <View style={styles.fleetStatDivider} />
+        <View style={styles.fleetStat}>
+          <Text style={[styles.fleetStatValue, { color: '#D5EFD5' }]}>{devices.filter(device => device.chips?.some(chip => /online|on\b/i.test(chip.label))).length}</Text>
+          <Text style={styles.fleetStatLabel}>Online</Text>
+        </View>
+      </View>
+    </View>
     <SearchField value={query} onChangeText={setQuery} style={{ marginHorizontal: 16, marginTop: 12 }} />
     <View style={styles.listSummary}><Text style={styles.summaryText}>{filteredDevices.length} devices</Text><Text style={styles.summaryText}>{isConnected ? (pollingError ? 'Refresh delayed' : formatUpdatedAt(lastUpdatedAt)) : 'Demo data'}</Text></View>
     <ScrollView contentContainerStyle={styles.deviceList} keyboardShouldPersistTaps="handled">
@@ -1183,5 +1208,28 @@ const styles = StyleSheet.create({
   automationBreadcrumb: { minHeight: 35, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 5 }, automationBreadcrumbText: { maxWidth: 120, color: C.muted, fontSize: 10 }, automationBreadcrumbCurrent: { flexShrink: 1, color: C.greenDark, fontSize: 10, fontWeight: '700' },
   automationFilters: { minHeight: 45, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 7 }, automationFilter: { minHeight: 40, flex: 1, paddingHorizontal: 9, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 4, borderWidth: 1, borderColor: C.line, borderRadius: 10, backgroundColor: C.white }, automationFilterText: { flex: 1, minWidth: 0 }, automationFilterLabel: { color: C.greenDark, fontSize: 8, fontWeight: '700' }, automationFilterValue: { color: C.ink, fontSize: 11, marginTop: 1 },
   automationSectionHeading: { marginHorizontal: 15, marginTop: 10, marginBottom: 7, color: C.ink, fontSize: 14, fontWeight: '700' }, automationList: { gap: 8, paddingHorizontal: 13, paddingBottom: 18 }, automationCard: { padding: 11, borderWidth: 1, borderColor: '#ECEFEB', borderRadius: 12, backgroundColor: C.white }, automationCardRunning: { borderColor: '#D9E7CC', backgroundColor: '#F4F8EE' }, automationRowTop: { flexDirection: 'row', alignItems: 'center', gap: 4 }, automationName: { color: C.greenDark, fontSize: 11, fontWeight: '700' }, automationSubtitle: { color: C.muted, fontSize: 9, marginTop: 3 }, automationRowBottom: { minHeight: 28, marginTop: 7, flexDirection: 'row', alignItems: 'center', gap: 6 }, runAutomationButton: { minHeight: 25, paddingHorizontal: 9, flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 13, backgroundColor: C.green }, runAutomationButtonRunning: { opacity: 0.72 }, runAutomationText: { color: C.white, fontSize: 9, fontWeight: '700' }, automationRunningPill: { paddingHorizontal: 7, paddingVertical: 4, borderWidth: 1, borderColor: '#E4B85A', borderRadius: 9, color: '#A67C24', fontSize: 8, fontWeight: '700' }, automationCountPill: { minHeight: 22, paddingHorizontal: 7, flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 12, backgroundColor: '#F4F5F3' }, automationCountText: { color: C.muted, fontSize: 9 }, automationEmpty: { minHeight: 150, alignItems: 'center', justifyContent: 'center', gap: 8 }, automationApiNote: { marginTop: 4, padding: 10, flexDirection: 'row', alignItems: 'flex-start', gap: 7, borderRadius: 9, backgroundColor: '#F4F8EE' },
+  screenSubtitle: { color: C.muted, fontSize: 11, lineHeight: 15, marginTop: 1 },
+  fleetOverview: { marginHorizontal: 16, marginTop: 10, paddingHorizontal: 14, paddingTop: 12, paddingBottom: 13, borderWidth: 1, borderColor: '#2C5536', borderRadius: 16, backgroundColor: '#2E5838', shadowColor: '#1C3823', shadowOpacity: 0.16, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 3 },
+  fleetOverviewHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  fleetEyebrow: { color: '#D4E5D5', fontSize: 9, fontWeight: '800', letterSpacing: 1 },
+  connectionPill: { minHeight: 20, paddingHorizontal: 7, flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.13)' },
+  connectionPillLive: { backgroundColor: 'rgba(255,255,255,0.13)' },
+  connectionPillDemo: { backgroundColor: 'rgba(255,255,255,0.13)' },
+  connectionDot: { width: 6, height: 6, borderRadius: 3 },
+  connectionLabel: { color: C.white, fontSize: 8, fontWeight: '800', letterSpacing: 0.6 },
+  fleetStats: { marginTop: 10, flexDirection: 'row', alignItems: 'center' },
+  fleetStat: { flex: 1, alignItems: 'center' },
+  fleetStatValue: { color: C.white, fontSize: 20, lineHeight: 24, fontWeight: '800' },
+  fleetStatLabel: { marginTop: 2, color: '#D4E5D5', fontSize: 9, lineHeight: 13 },
+  fleetStatDivider: { width: StyleSheet.hairlineWidth, height: 30, backgroundColor: 'rgba(255,255,255,0.28)' },
+  deviceCardLayoutOverride: { minHeight: 0, flexDirection: 'column', alignItems: 'stretch', gap: 10, padding: 13, borderWidth: 1, borderColor: C.line, borderRadius: 16, shadowColor: '#263529', shadowOpacity: 0.035, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 1 },
+  deviceCardTop: { flexDirection: 'row', alignItems: 'center', gap: 11 },
+  deviceCardBottom: { minHeight: 27, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  deviceCardChipRow: { flex: 1, minWidth: 0, marginTop: 0 },
+  deviceLastHeard: { maxWidth: '42%', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 5 },
+  deviceLastHeardText: { color: C.muted, fontSize: 9, lineHeight: 13 },
+  deviceIdLine: { paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.line, color: C.muted, fontSize: 8, lineHeight: 12, letterSpacing: 0.2 },
+  tabIconShell: { width: 38, height: 27, alignItems: 'center', justifyContent: 'center', borderRadius: 14 },
+  tabIconShellActive: { backgroundColor: C.greenPale },
   toast: { position: 'absolute', left: 20, right: 20, bottom: 74, zIndex: 20, minHeight: 38, paddingHorizontal: 14, paddingVertical: 10, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: '#26312B', elevation: 5 }, toastText: { color: C.white, fontSize: 11, textAlign: 'center' }, loadingOverlay: { ...StyleSheet.absoluteFillObject, zIndex: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8F9F7AA' },
 });
