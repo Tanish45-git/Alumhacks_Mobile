@@ -22,10 +22,7 @@ import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import MapView, { Marker } from 'react-native-maps';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
-<<<<<<< HEAD
 import * as SecureStore from 'expo-secure-store';
-=======
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
 import { demoDevices, demoNotices, GinjerClient, hasCoordinates, isMongoObjectId } from './src/api';
 
 const C = {
@@ -86,10 +83,7 @@ const GOOGLE_MAPS_LIGHT_STYLE = [
 
 const DEMO_PROFILE = { name: 'Shaheen Ansari', email: 'shaheenansari2519cs@gmail.com', primaryPhone: '', secondaryPhone: '', organization: 'SenRa IoT' };
 const ALL_PROJECTS_ID = '__all_projects__';
-<<<<<<< HEAD
 const SESSION_STORAGE_KEY = 'alumhacks.ginjer.session.v1';
-=======
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
 const DEMO_PROJECTS = [
   { _id: 'demo-default-solution', name: 'Default solution', isDemo: true },
   { _id: 'demo-upark-solution', name: 'uPark solution', isDemo: true },
@@ -213,11 +207,7 @@ function DeviceCard({ device, onPress }) {
 }
 
 function preferredDownlinkModule(device, modules) {
-<<<<<<< HEAD
   const interfaces = modules;
-=======
-  const interfaces = modules.filter(module => module.moduleType === 'DOWNLINK_INTERFACE');
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
   const relayController = /relay|lt\s*io\s*controller/i.test(`${device?.name || ''} ${device?.hardwareType || ''} ${device?.outputs?.map(output => output.outputName || output.label || '').join(' ') || ''}`);
   if (relayController) {
     return interfaces.find(module => /^relay\s*1$/i.test(module.label || ''))
@@ -228,7 +218,6 @@ function preferredDownlinkModule(device, modules) {
   return interfaces.length === 1 ? interfaces[0] : null;
 }
 
-<<<<<<< HEAD
 function colorCommandValue(module, enteredValue) {
   if (!/set\s*colou?r/i.test(module?.label || '')) return enteredValue.trim();
   const supported = { red: 'Red', blue: 'Blue', green: 'Green', off: 'Off' };
@@ -258,8 +247,6 @@ function downlinkConfirmation(receipt) {
   return `Ginjer replied: ${detail}. Device execution is not confirmed until its next uplink.`;
 }
 
-=======
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
 function BottomTabs({ current, onChange }) {
   const items = [
     ['devices', 'Devices', 'view-dashboard-outline'], ['locations', 'Locations', 'map-outline'],
@@ -312,16 +299,9 @@ function AppContent() {
   const [tab, setTab] = useState('devices');
   const [previousRoute, setPreviousRoute] = useState('devices');
   const [modal, setModal] = useState(null);
-<<<<<<< HEAD
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [sessionId, setSessionId] = useState('');
-=======
-  const [loginMode, setLoginMode] = useState('password');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [token, setToken] = useState('');
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
   const [loginError, setLoginError] = useState('');
   const [loading, setLoading] = useState(false);
   const [demoMode, setDemoMode] = useState(true);
@@ -348,7 +328,6 @@ function AppContent() {
   const [noticeFilter, setNoticeFilter] = useState('all');
   const [expanded, setExpanded] = useState(false);
   const [toast, setToast] = useState('');
-<<<<<<< HEAD
   const [downlinkInterfaces, setDownlinkInterfaces] = useState([]);
   const [downlinkNetworkKeys, setDownlinkNetworkKeys] = useState([]);
   const [downlinkOptionsLoading, setDownlinkOptionsLoading] = useState(false);
@@ -358,14 +337,6 @@ function AppContent() {
   const [downlinkPort, setDownlinkPort] = useState('1');
   const [downlinkClass, setDownlinkClass] = useState('CLASS_C');
   const [downlinkNetworkKeyId, setDownlinkNetworkKeyId] = useState('');
-=======
-  const [downlinkModule, setDownlinkModule] = useState('');
-  const [downlinkControllerValue, setDownlinkControllerValue] = useState('');
-  const [downlinkPort, setDownlinkPort] = useState('1');
-  const [downlinkClass, setDownlinkClass] = useState('C');
-  const [downlinkKey, setDownlinkKey] = useState('');
-  const [downlinkFeedback, setDownlinkFeedbackState] = useState(null);
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
   const [organizationQuery, setOrganizationQuery] = useState('');
   const [automationRules, setAutomationRules] = useState(() => AUTO_RULE_SEED.map(rule => ({ ...rule })));
   const [automationSolution, setAutomationSolution] = useState('All');
@@ -377,17 +348,7 @@ function AppContent() {
   const [activeAutomationId, setActiveAutomationId] = useState(null);
   const mapRef = useRef(null);
   const refreshInFlightRef = useRef(false);
-<<<<<<< HEAD
   const client = useMemo(() => serverUrl ? new GinjerClient(serverUrl, sessionId) : null, [serverUrl, sessionId]);
-=======
-  const downlinkFeedbackRef = useRef(null);
-  const setDownlinkFeedback = useCallback(nextOrUpdater => {
-    const next = typeof nextOrUpdater === 'function' ? nextOrUpdater(downlinkFeedbackRef.current) : nextOrUpdater;
-    downlinkFeedbackRef.current = next;
-    setDownlinkFeedbackState(next);
-  }, []);
-  const client = useMemo(() => serverUrl ? new GinjerClient(serverUrl) : null, [serverUrl]);
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
   const isConnected = connectedToBackend && !demoMode;
   const hasTabs = ['devices', 'locations', 'analytics', 'profile'].includes(route);
   const positionableDevices = useMemo(() => {
@@ -400,7 +361,6 @@ function AppContent() {
     setTimeout(() => setToast(''), 2500);
   }, []);
 
-<<<<<<< HEAD
   const clearLocalSession = useCallback(async (message = '') => {
     await client?.clearSession();
     await SecureStore.deleteItemAsync(SESSION_STORAGE_KEY);
@@ -410,17 +370,6 @@ function AppContent() {
     setRoute('login'); setTab('devices'); setModal(null);
     if (message) showToast(message);
   }, [client, showToast]);
-=======
-  useEffect(() => {
-    if (!downlinkFeedback || downlinkFeedback.status !== 'waiting') return undefined;
-    const timer = setTimeout(() => {
-      setDownlinkFeedback(current => current?.id === downlinkFeedback.id && current.status === 'waiting'
-        ? { ...current, status: 'failed', message: `Failed: No device response within ${current.timeoutLabel}. Check that the device is powered, online, and connected to the correct network.` }
-        : current);
-    }, Math.max(0, downlinkFeedback.deadline - Date.now()));
-    return () => clearTimeout(timer);
-  }, [downlinkFeedback, setDownlinkFeedback]);
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
 
   const fetchActiveProjectData = useCallback(() => {
     if (!client || !activeOrganisation || !activeProject) return Promise.resolve(null);
@@ -553,7 +502,6 @@ function AppContent() {
 
   const back = useCallback(() => {
     if (modal) { setModal(null); return true; }
-<<<<<<< HEAD
     if (route === 'detail' || route === 'notifications' || route === 'map') {
       setRoute(route === 'detail' ? previousRoute : route === 'map' ? previousRoute : previousRoute);
       return true;
@@ -563,23 +511,6 @@ function AppContent() {
     setRoute(tab);
     return true;
   }, [modal, route, previousRoute, tab]);
-=======
-    if (route === 'setup' || route === 'login' || route === 'devices') return false;
-    if (route === 'edit') {
-      setProfileDraft(profile);
-      setProfilePhotoDraftUri(profilePhotoUri);
-      setRoute('profile');
-      return true;
-    }
-    if (['locations', 'analytics', 'profile'].includes(route)) {
-      setTab('devices');
-      setRoute('devices');
-      return true;
-    }
-    setRoute(previousRoute && previousRoute !== route ? previousRoute : tab);
-    return true;
-  }, [modal, route, previousRoute, tab, profile, profilePhotoUri]);
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
 
   useEffect(() => {
     const listener = BackHandler.addEventListener('hardwareBackPress', back);
@@ -607,28 +538,14 @@ function AppContent() {
       try {
         const result = await fetchActiveProjectData();
         if (!mounted || !result) return;
-<<<<<<< HEAD
-=======
-        const pendingDownlink = downlinkFeedbackRef.current;
-        if (pendingDownlink?.status === 'waiting') {
-          const refreshedDevice = result.devices.find(device => device.apiId === pendingDownlink.deviceApiId);
-          if (timestampMillis(refreshedDevice?.timestamp) > pendingDownlink.sentAt) {
-            setDownlinkFeedback({ ...pendingDownlink, status: 'responded', message: 'Device responded with fresh data after the command. Check its Outputs below to confirm the requested state.' });
-          }
-        }
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
         setDevices(result.devices); setModules(result.modules);
         setSelectedDevice(current => current ? result.devices.find(item => item.apiId === current.apiId) || result.devices[0] || null : result.devices[0] || null);
         setSelectedMapDevice(current => current ? result.devices.find(item => item.apiId === current.apiId) || null : null);
         setLastUpdatedAt(Date.now()); setPollingError('');
       } catch (error) {
-<<<<<<< HEAD
         if (error.code === 'SESSION_EXPIRED') {
           if (mounted) await clearLocalSession('Your Ginjer session expired. Please sign in again.');
         } else if (mounted) setPollingError(error.message || 'Could not refresh project data.');
-=======
-        if (mounted) setPollingError(error.message || 'Could not refresh project data.');
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
       } finally {
         refreshInFlightRef.current = false;
       }
@@ -636,11 +553,7 @@ function AppContent() {
     const timer = setInterval(poll, 20000);
     const subscription = AppState.addEventListener('change', state => { if (state === 'active') poll(); });
     return () => { mounted = false; clearInterval(timer); subscription.remove(); };
-<<<<<<< HEAD
   }, [isConnected, client, activeOrganisation, activeProject, fetchActiveProjectData, clearLocalSession]);
-=======
-  }, [isConnected, client, activeOrganisation, activeProject, fetchActiveProjectData, setDownlinkFeedback]);
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
 
   const checkServer = async () => {
     const candidate = serverInput.trim().replace(/[./]+$/, '');
@@ -662,11 +575,7 @@ function AppContent() {
     setDevices(result.devices); setModules(result.modules); setSelectedDevice(result.devices[0] || null);
     setLastUpdatedAt(Date.now()); setPollingError('');
     setDemoMode(false); setTab('devices'); setRoute('devices'); setQuery(''); setLoginError(''); setModal(null);
-<<<<<<< HEAD
     setProfile(current => ({ ...current, email: current.email || 'Connected Ginjer user' }));
-=======
-    setProfile(current => ({ ...current, email: current.email || 'Connected with API token' }));
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
     if (result.errors.length) showToast(result.errors.join(' '));
     if (!result.devices.length) showToast('No devices were returned for this project.');
     else showToast('Project data loaded from Ginjer.');
@@ -712,7 +621,6 @@ function AppContent() {
     throw new Error(failures.join(' '));
   };
 
-<<<<<<< HEAD
   useEffect(() => {
     let mounted = true;
     const restore = async () => {
@@ -738,13 +646,10 @@ function AppContent() {
     return () => { mounted = false; };
   }, []);
 
-=======
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
   const submitLogin = async () => {
     if (!client) { setLoginError('Connect to the computer backend first.'); return; }
     setLoading(true); setLoginError('');
     try {
-<<<<<<< HEAD
       const data = await client.login(email.trim(), password);
       const user = data.user;
       const nextProfile = { ...DEMO_PROFILE, name: [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Ginjer User', email: user?.emailId || email.trim() };
@@ -756,39 +661,12 @@ function AppContent() {
       await client.clearSession();
       await SecureStore.deleteItemAsync(SESSION_STORAGE_KEY);
       setSessionId(''); setPassword('');
-=======
-      let authToken = token.trim().replace(/^Bearer\s+/i, '');
-      if (loginMode === 'password') {
-        const data = await client.signIn(email.trim(), password);
-        const user = data.signIn;
-        if (!user?.token) throw new Error('Sign-in returned no token. Check your Ginjer credentials.');
-        authToken = user.token;
-        setProfile(current => ({ ...current, name: [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Ginjer User', email: user.emailId || email }));
-        const defaultId = (typeof user.defaultAccount === 'string' ? user.defaultAccount : user.defaultAccount?.organisationId) || user.organisationId;
-        await client.saveToken(authToken);
-        await loadAccountData(client, defaultId);
-      } else {
-        if (!authToken) throw new Error('Paste the token value from your Postman environment.');
-        await client.saveToken(authToken);
-        setProfile(current => ({ ...current, name: current.name || 'Ginjer user', email: current.email || 'Connected with API token' }));
-        await loadAccountData(client);
-      }
-    } catch (error) {
-      await client.clearToken();
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
       setLoginError(error.message || 'Could not connect to Ginjer.');
     } finally { setLoading(false); }
   };
 
   const disconnect = async () => {
-<<<<<<< HEAD
     await clearLocalSession('Signed out.');
-=======
-    await client?.clearToken();
-    setDemoMode(true); setDevices(demoDevices); setSelectedDevice(demoDevices[1]);
-    setOrganisations([]); setProjects([]); setModules([]); setActiveOrganisation(null); setActiveProject(null);
-    setProfile(DEMO_PROFILE); setProfileDraft(DEMO_PROFILE); setProfilePhotoUri(null); setProfilePhotoDraftUri(null); setRoute('login'); setTab('devices'); setModal(null); showToast('Signed out.');
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
   };
 
   const refresh = async () => {
@@ -803,7 +681,6 @@ function AppContent() {
       setSelectedMapDevice(current => current ? result.devices.find(item => item.apiId === current.apiId) || null : null);
       setLastUpdatedAt(Date.now()); setPollingError('');
       showToast('Device data refreshed from Ginjer.');
-<<<<<<< HEAD
     } catch (error) {
       if (error.code === 'SESSION_EXPIRED') await clearLocalSession('Your Ginjer session expired. Please sign in again.');
       else showToast(`Refresh failed: ${error.message}`);
@@ -836,12 +713,6 @@ function AppContent() {
     }
   };
 
-=======
-    } catch (error) { showToast(`Refresh failed: ${error.message}`); }
-    finally { refreshInFlightRef.current = false; setLoading(false); }
-  };
-
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
   const chooseOrganisation = async organisation => {
     try { await loadOrganisation(organisation); }
     catch (error) { showToast(error.message); setModal('organisations'); }
@@ -876,13 +747,10 @@ function AppContent() {
   };
 
   const onDetailBack = () => {
-<<<<<<< HEAD
     if (route === 'detail' && previousRoute === 'map') { setRoute('map'); return; }
     if (route === 'detail' && previousRoute === 'notifications') { setRoute('notifications'); return; }
     if (route === 'notifications') { setRoute(previousRoute || 'devices'); return; }
     if (route === 'map') { setRoute(previousRoute || 'locations'); return; }
-=======
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
     back();
   };
 
@@ -908,7 +776,6 @@ function AppContent() {
         <View style={styles.loginBrand}><Image source={require('./assets/reference/senra-logo.png')} style={styles.ginjerLogo} resizeMode="contain" /></View>
         <Text style={styles.loginTagline}>A new way to Sense, Control and Automate</Text>
         <Image source={require('./assets/reference/login-illustration.png')} style={styles.loginIllustration} resizeMode="contain" />
-<<<<<<< HEAD
         <View style={styles.loginSecurityNote}><Icon name="lock-outline" size={17} color={C.greenDark} /><Text style={styles.loginSecurityText}>Sign in with your individual Ginjer account. Passwords are used only for this sign-in.</Text></View>
         <Text style={styles.fieldLabel}>Email ID*</Text>
         <TextInput value={email} onChangeText={setEmail} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" autoComplete="email" placeholder="Email ID" placeholderTextColor="#9EA39F" style={styles.textInput} accessibilityLabel="Email ID" />
@@ -918,22 +785,6 @@ function AppContent() {
           <Pressable accessibilityRole="button" accessibilityLabel={passwordVisible ? 'Hide password' : 'Show password'} onPress={() => setPasswordVisible(value => !value)} hitSlop={10} style={styles.passwordVisibilityButton}><Icon name={passwordVisible ? 'eye-off-outline' : 'eye-outline'} size={20} color={C.muted} /></Pressable>
         </View>
         {loginError ? <Text accessibilityRole="alert" style={styles.errorText}>{loginError}</Text> : null}
-=======
-        {loginMode === 'password' ? <>
-          <Text style={styles.fieldLabel}>Email ID*</Text>
-          <TextInput value={email} onChangeText={setEmail} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" autoComplete="email" placeholder="Email ID" placeholderTextColor="#9EA39F" style={styles.textInput} accessibilityLabel="Email ID" />
-          <Text style={[styles.fieldLabel, { marginTop: 14 }]}>Password*</Text>
-          <View style={styles.loginPasswordShell}>
-            <TextInput value={password} onChangeText={setPassword} secureTextEntry={!passwordVisible} autoComplete="password" placeholder="Password" placeholderTextColor="#9EA39F" style={[styles.textInput, styles.loginPasswordInput]} accessibilityLabel="Password" />
-            <Pressable accessibilityRole="button" accessibilityLabel={passwordVisible ? 'Hide password' : 'Show password'} onPress={() => setPasswordVisible(value => !value)} hitSlop={10} style={styles.passwordVisibilityButton}><Icon name={passwordVisible ? 'eye-off-outline' : 'eye-outline'} size={20} color={C.muted} /></Pressable>
-          </View>
-        </> : <>
-          <Text style={styles.fieldLabel}>Ginjer API token</Text>
-          <TextInput value={token} onChangeText={setToken} secureTextEntry autoCapitalize="none" autoCorrect={false} placeholder="Paste your Postman token" placeholderTextColor="#9EA39F" style={styles.textInput} accessibilityLabel="Ginjer API token" />
-        </>}
-        {loginError ? <Text accessibilityRole="alert" style={styles.errorText}>{loginError}</Text> : null}
-        {loginError || loginMode === 'token' ? <Pressable onPress={() => { setLoginMode(current => current === 'password' ? 'token' : 'password'); setLoginError(''); }} style={styles.authModeLink}><Text style={styles.authModeLinkText}>{loginMode === 'password' ? 'Use API token instead' : 'Use email and password'}</Text></Pressable> : null}
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
         <ActionButton title={loading ? 'Logging in…' : 'Log In'} disabled={loading} onPress={submitLogin} style={{ marginTop: 28 }} />
         <Text style={styles.legalText}>By continuing, I accept the <Text style={styles.legalLinkText}>Terms and Conditions</Text> and <Text style={styles.legalLinkText}>Privacy Policy</Text>.</Text>
       </ScrollView>
@@ -1018,11 +869,7 @@ function AppContent() {
       setAutomationRules(current => current.map(item => item.id === rule.id ? { ...item, runs: (item.runs || 0) + (item.running ? 0 : 1), running: !item.running } : item));
     };
     return <View style={styles.screen}>
-<<<<<<< HEAD
       <ScreenHeader title="Automation" onBack={() => setRoute(previousRoute || 'devices')} right={<IconButton name="plus" label="Add automation" color={C.greenDark} onPress={() => { setActiveAutomationId(null); setNewAutomationName(''); setNewAutomationSolution('Default solution'); setNewAutomationOutput('Valve 1'); setNewAutomationMode('manual'); setModal('automation-create'); }} />} />
-=======
-      <ScreenHeader title="Automation" onBack={back} right={<IconButton name="plus" label="Add automation" color={C.greenDark} onPress={() => { setActiveAutomationId(null); setNewAutomationName(''); setNewAutomationSolution('Default solution'); setNewAutomationOutput('Valve 1'); setNewAutomationMode('manual'); setModal('automation-create'); }} />} />
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
       <View style={styles.automationBreadcrumb}><Icon name="home-outline" size={14} color={C.muted} /><Text style={styles.automationBreadcrumbText}>Projects</Text><Icon name="chevron-right" size={13} color={C.muted} /><Text numberOfLines={1} style={styles.automationBreadcrumbText}>{activeProject?.name || 'Demo Project'}</Text><Icon name="chevron-right" size={13} color={C.muted} /><Text style={styles.automationBreadcrumbCurrent}>Automation</Text></View>
       <View style={styles.automationFilters}>
         <Pressable style={styles.automationFilter} onPress={() => setModal('automation-solution')}><View style={styles.automationFilterText}><Text style={styles.automationFilterLabel}>Solution</Text><Text numberOfLines={1} style={styles.automationFilterValue}>{automationSolution}</Text></View><Icon name="chevron-down" size={17} color={C.muted} /></Pressable>
@@ -1094,12 +941,8 @@ function AppContent() {
       <Pressable onPress={() => setExpanded(!expanded)} style={styles.expandButton}><Text style={styles.expandButtonText}>{expanded ? 'See less' : 'See more'}</Text><Icon name={expanded ? 'chevron-up' : 'chevron-down'} size={17} color={C.greenDark} /></Pressable>
       {expanded ? <View style={styles.expandedDetails}><Text style={styles.expandedLine}><Text style={styles.bold}>Device type</Text> · {device.hardwareType || 'Not reported'}</Text><Text style={styles.expandedLine}><Text style={styles.bold}>Network ID</Text> · {device.networkId || 'Not reported'}</Text>{device.attributes?.length ? device.attributes.map((attribute, index) => <Text key={attribute.attributeId || index} style={styles.expandedLine}><Text style={styles.bold}>{attribute.attributeName || 'Attribute'}</Text> · {formatOutput(attribute.value)}</Text>) : <Text style={styles.expandedLine}><Text style={styles.bold}>Attributes</Text> · None returned</Text>}</View> : null}
       <Text style={styles.sectionTitleSmall}>Outputs</Text>
-<<<<<<< HEAD
       {device.outputs?.length ? <View style={styles.outputGrid}>{device.outputs.map((output, index) => <View key={output.outputId || index} style={styles.outputCard}><Text numberOfLines={1} style={styles.outputLabel}>{output.outputName || output.label || `Output ${index + 1}`}</Text><Text style={styles.outputValue}>{formatOutput(output.value ?? output.label)}</Text><View style={[styles.outputDot, { backgroundColor: chipColor(output.status) }]} /></View>)}</View> : <View style={styles.emptyInline}><Text style={styles.emptyText}>No output data returned for this device.</Text></View>}
       {device.outputs?.some(output => output.status === 'unknown') ? <Text style={[styles.infoNoteText, { marginHorizontal: 16, marginTop: 8 }]}>Unknown readings mean Ginjer has not reported those values yet. A queued downlink does not confirm a color change; check again after the device's next uplink.</Text> : null}
-=======
-      {device.outputs?.length ? <View style={styles.outputGrid}>{device.outputs.map((output, index) => <View key={output.outputId || index} style={styles.outputCard}><Text numberOfLines={1} style={styles.outputLabel}>{output.outputName || output.label || `Output ${index + 1}`}</Text><Text style={styles.outputValue}>{formatOutput(output.value ?? output.label)}</Text><View style={[styles.outputDot, { backgroundColor: chipColor(device.chips?.[0]?.status) }]} /></View>)}</View> : <View style={styles.emptyInline}><Text style={styles.emptyText}>No output data returned for this device.</Text></View>}
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
       <View style={styles.detailSectionHeader}><Text style={styles.sectionTitleSmall}>Location</Text><Pressable onPress={() => openFullMap('detail', device)}><Text style={styles.linkText}>View map</Text></Pressable></View>
       <View style={styles.miniMap}>
         <MapView style={StyleSheet.absoluteFill} initialRegion={coords ? { latitude: Number(device.position.lat), longitude: Number(device.position.lng), latitudeDelta: 0.08, longitudeDelta: 0.08 } : { latitude: 22.9734, longitude: 78.6569, latitudeDelta: 24, longitudeDelta: 24 }} scrollEnabled={coords} zoomEnabled={coords} userInterfaceStyle="light" customMapStyle={GOOGLE_MAPS_LIGHT_STYLE}>
@@ -1108,14 +951,8 @@ function AppContent() {
         {!coords ? <View style={styles.miniMapMessage}><Icon name="map-marker-off-outline" size={17} color={C.greenDark} /><Text style={styles.miniMapText}>Coordinates were not returned for this device.</Text></View> : null}
       </View>
       <View style={styles.expandedDetails}><Text style={styles.expandedLine}>{device.loc}{coords ? ` · ${device.position.lat}, ${device.position.lng}` : ''}</Text></View>
-<<<<<<< HEAD
       <View style={styles.detailActions}><ActionButton title="Refresh data" secondary onPress={refresh} />{isConnected ? <ActionButton title="Send Downlink" disabled={!isMongoObjectId(device.apiId)} onPress={() => openDownlink(device)} /> : null}</View>
       {isConnected && !isMongoObjectId(device.apiId) ? <Text style={styles.downlinkIdWarning}>Ginjer has not returned this device’s database ID. Refresh the device list before sending commands.</Text> : null}
-=======
-      <View style={styles.detailActions}><ActionButton title="Refresh data" secondary onPress={refresh} />{isConnected && modules.some(item => item.moduleType === 'DOWNLINK_INTERFACE') ? <ActionButton title="Send Downlink" disabled={!isMongoObjectId(device.apiId)} onPress={() => { setDownlinkControllerValue(''); setDownlinkPort('1'); setDownlinkClass('C'); setDownlinkKey(''); setDownlinkModule(preferredDownlinkModule(device, modules)?._id || ''); setModal('downlink'); }} /> : null}</View>
-      {isConnected && modules.some(item => item.moduleType === 'DOWNLINK_INTERFACE') && !isMongoObjectId(device.apiId) ? <Text style={styles.downlinkIdWarning}>Ginjer has not returned this device’s database ID. Refresh the device list before sending commands.</Text> : null}
-      {downlinkFeedback?.deviceApiId === device.apiId ? <View style={[styles.downlinkFeedback, downlinkFeedback.status === 'failed' ? styles.downlinkFeedbackFailed : downlinkFeedback.status === 'responded' ? styles.downlinkFeedbackResponded : styles.downlinkFeedbackWaiting]}><Icon name={downlinkFeedback.status === 'failed' ? 'alert-circle-outline' : downlinkFeedback.status === 'responded' ? 'check-circle-outline' : 'clock-outline'} size={18} color={downlinkFeedback.status === 'failed' ? C.red : downlinkFeedback.status === 'responded' ? C.greenDark : C.amber} /><Text style={[styles.downlinkFeedbackText, downlinkFeedback.status === 'failed' ? styles.downlinkFeedbackTextFailed : downlinkFeedback.status === 'responded' ? styles.downlinkFeedbackTextResponded : styles.downlinkFeedbackTextWaiting]}>{downlinkFeedback.message}</Text></View> : null}
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
     </ScrollView>;
   };
 
@@ -1229,7 +1066,6 @@ function AppContent() {
         {options.map(([id, label]) => <OptionRow key={id} title={label} selected={value === id} onPress={() => noticeMode ? setNoticeFilter(id) : setFilter(id)} radio />)}
       </Sheet>;
     }
-<<<<<<< HEAD
     if (modal === 'downlink-keys') return <Sheet visible title="Downlink network key" subtitle="Choose a key configured for this device's network." onClose={() => setModal('downlink')} actions={<ActionButton title="Back" secondary onPress={() => setModal('downlink')} />}>
       {downlinkNetworkKeys.map(key => <OptionRow key={key.id} title={key.name} selected={downlinkNetworkKeyId === key.id} onPress={() => { setDownlinkNetworkKeyId(key.id); setModal('downlink'); }} radio />)}
       {!downlinkNetworkKeys.length ? <Text style={styles.sheetEmpty}>No downlink keys are configured for this device network.</Text> : null}
@@ -1276,58 +1112,6 @@ function AppContent() {
         <Text style={[styles.fieldLabel, { marginTop: 12 }]}>Downlink network key</Text>
         <Pressable accessibilityRole="button" onPress={() => setModal('downlink-keys')} style={styles.automationFilter}><Text style={styles.automationFilterText}>{selectedNetworkKey?.name || 'Choose a configured network key'}</Text><Icon name="chevron-down" size={17} color={C.muted} /></Pressable>
         <Text style={[styles.infoNoteText, { marginTop: 8 }]}>{relayController ? 'Relay 1 is preselected only when supported by this device hardware. Ginjer will queue the command; confirm the relay changed in the next device uplink.' : 'This sends the selected controller value using the device network’s configured key. Confirm execution in the next device uplink.'}</Text>
-=======
-    if (modal === 'downlink') {
-      const interfaces = modules.filter(module => module.moduleType === 'DOWNLINK_INTERFACE');
-      const relayController = /relay|lt\s*io\s*controller/i.test(`${selectedDevice?.name || ''} ${selectedDevice?.hardwareType || ''} ${selectedDevice?.outputs?.map(output => output.outputName || output.label || '').join(' ') || ''}`);
-      const send = async () => {
-        if (demoMode || !isConnected || !client) { showToast('Downlinks are available only for a live Ginjer device.'); setModal(null); return; }
-        if (!isMongoObjectId(selectedDevice?.apiId)) { showToast('Failed: Ginjer device ID is missing or invalid. Refresh the live device list and select the device again.'); return; }
-        if (!isMongoObjectId(selectedDevice?.projectId)) { showToast('Failed: Ginjer project ID is missing or invalid. Refresh the project and device list.'); return; }
-        if (!downlinkModule || !interfaces.some(item => item._id === downlinkModule)) { showToast('Failed: Select a live downlink interface from Ginjer.'); return; }
-        const port = Number(downlinkPort);
-        if (!downlinkControllerValue.trim()) { showToast('Failed: Enter the controller value.'); return; }
-        if (!Number.isInteger(port) || port < 1 || port > 223) { showToast('Failed: Downlink port must be a whole number from 1 to 223.'); return; }
-        if (!downlinkKey.trim()) { showToast('Failed: Enter the downlink key configured in Ginjer.'); return; }
-        const value = { value: downlinkControllerValue.trim(), port, class: downlinkClass, key: downlinkKey.trim() };
-        const requestId = `${selectedDevice.apiId}-${Date.now()}`;
-        const timeoutMs = downlinkClass === 'C' ? 60_000 : 300_000;
-        setDownlinkFeedback({ id: requestId, status: 'sending', deviceApiId: selectedDevice.apiId, message: 'Sending command to Ginjer…' });
-        setLoading(true);
-        try {
-          let timeoutHandle;
-          const result = await Promise.race([
-            client.sendDownlink(activeOrganisation, selectedDevice, downlinkModule, value),
-            new Promise((_, reject) => { timeoutHandle = setTimeout(() => reject(new Error('Ginjer did not respond to the downlink request within 15 seconds.')), 15_000); }),
-          ]).finally(() => clearTimeout(timeoutHandle));
-          const receipt = result.sendDownlink;
-          if (!receipt) throw new Error('Ginjer returned no downlink receipt. Check the device and payload before retrying.');
-          if (/^(error|failed|failure|rejected)$/i.test(String(receipt.type || '').trim())) throw new Error(receipt.message || 'Ginjer rejected the downlink.');
-          const sentAt = Date.now();
-          setDownlinkFeedback({ id: requestId, status: 'waiting', deviceApiId: selectedDevice.apiId, sentAt, deadline: sentAt + timeoutMs, timeoutLabel: timeoutMs === 60_000 ? '60 seconds' : '5 minutes', message: 'Ginjer accepted the command. Waiting for a fresh device response…' });
-          setModal(null);
-          showToast('Command sent. Waiting for the device to respond.');
-        } catch (error) {
-          const message = `Failed: ${error.message || 'The command could not be sent.'}`;
-          setDownlinkFeedback({ id: requestId, status: 'failed', deviceApiId: selectedDevice.apiId, message });
-          setModal(null);
-          showToast(message);
-        }
-        finally { setLoading(false); }
-      };
-      return <Sheet visible title="Send Downlink" subtitle={`Live device: ${selectedDevice?.name || '—'} · Device ID ${selectedDevice?.id || selectedDevice?.devEui || selectedDevice?.hardwareId || 'unavailable'}`} onClose={() => setModal(null)} actions={<><ActionButton title="Cancel" secondary onPress={() => setModal(null)} /><ActionButton title={loading ? 'Sending…' : 'Send'} disabled={loading || !interfaces.length} onPress={send} /></>}>
-        <Text style={styles.fieldLabel}>Downlink interface</Text>
-        {interfaces.length ? interfaces.map(item => <OptionRow key={item._id} title={item.label || item._id} selected={downlinkModule === item._id} onPress={() => setDownlinkModule(item._id)} radio />) : <Text style={styles.sheetEmpty}>No downlink interface is available for this organization.</Text>}
-        <Text style={[styles.fieldLabel, { marginTop: 14 }]}>Controller value</Text>
-        <TextInput value={downlinkControllerValue} onChangeText={setDownlinkControllerValue} autoCapitalize="none" autoCorrect={false} style={styles.textInput} accessibilityLabel="Controller value" placeholder="Enter value for selected controller" placeholderTextColor="#A0A6A1" />
-        <View style={styles.downlinkFieldsRow}>
-          <View style={{ flex: 1 }}><Text style={[styles.fieldLabel, { marginTop: 12 }]}>Downlink port</Text><TextInput value={downlinkPort} onChangeText={setDownlinkPort} keyboardType="number-pad" style={styles.textInput} accessibilityLabel="Downlink port" /></View>
-          <View style={{ flex: 1 }}><Text style={[styles.fieldLabel, { marginTop: 12 }]}>Class</Text><View style={styles.downlinkClassRow}>{['A', 'B', 'C'].map(item => <Pressable key={item} accessibilityRole="radio" accessibilityState={{ selected: downlinkClass === item }} onPress={() => setDownlinkClass(item)} style={[styles.downlinkClassOption, downlinkClass === item && styles.downlinkClassOptionSelected]}><Text style={[styles.downlinkClassText, downlinkClass === item && styles.downlinkClassTextSelected]}>Class {item}</Text></Pressable>)}</View></View>
-        </View>
-        <Text style={[styles.fieldLabel, { marginTop: 12 }]}>Downlink key</Text>
-        <TextInput value={downlinkKey} onChangeText={setDownlinkKey} secureTextEntry autoCapitalize="none" autoCorrect={false} style={styles.textInput} accessibilityLabel="Downlink key" placeholder="Enter the key configured in Ginjer" placeholderTextColor="#A0A6A1" />
-        <Text style={[styles.infoNoteText, { marginTop: 8 }]}>{relayController ? 'Relay 1 is preselected when returned by Ginjer for this live controller. This submits the entered value, port, class and key. Confirm the relay changed in the next device uplink.' : 'This submits the entered value, port, class and key to the selected live Ginjer interface. Confirm execution in the next device uplink.'}</Text>
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
         {!isConnected ? <Text style={styles.footnote}>Connect to Ginjer to send a real device command.</Text> : null}
       </Sheet>;
     }
@@ -1362,11 +1146,7 @@ function kindIcon(kind) {
   return kind === 'snow' ? 'snowflake' : kind === 'water' ? 'water-outline' : kind === 'alert' ? 'alert-outline' : kind === 'air' ? 'weather-windy' : 'tune-variant';
 }
 
-<<<<<<< HEAD
 function chipColor(status) { return status === 'red' ? C.red : status === 'amber' ? C.amber : status === 'blue' ? C.blue : status === 'unknown' ? C.muted : C.green; }
-=======
-function chipColor(status) { return status === 'red' ? C.red : status === 'amber' ? C.amber : status === 'blue' ? C.blue : C.green; }
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
 function formatOutput(value) { return typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value ?? '—'); }
 function formatUpdatedAt(timestamp) {
   if (!timestamp) return 'Waiting for data';
@@ -1375,32 +1155,18 @@ function formatUpdatedAt(timestamp) {
   if (seconds < 60) return `Updated ${seconds}s ago`;
   return `Updated ${Math.floor(seconds / 60)}m ago`;
 }
-<<<<<<< HEAD
-=======
-function timestampMillis(value) {
-  if (value == null || value === '') return 0;
-  const numeric = Number(value);
-  if (Number.isFinite(numeric)) return numeric < 1e12 ? numeric * 1000 : numeric;
-  const parsed = Date.parse(value);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
 
 const styles = StyleSheet.create({
   flex: { flex: 1 }, safeArea: { flex: 1, backgroundColor: C.canvas }, appBody: { flex: 1, minHeight: 0 }, screen: { flex: 1, backgroundColor: C.canvas },
   centerPage: { flex: 1, justifyContent: 'center', padding: 22 }, setupPanel: { width: '100%', maxWidth: 440, alignSelf: 'center', padding: 22, borderRadius: 20, backgroundColor: C.white, elevation: 3, shadowColor: '#15220E', shadowOpacity: 0.08, shadowRadius: 18, shadowOffset: { width: 0, height: 8 } },
-  kicker: { color: C.green, fontSize: 12, fontWeight: '800', letterSpacing: 1.2, marginBottom: 11 }, screenHeading: { color: C.ink, fontSize: 24, fontWeight: '700', marginBottom: 9 }, bodyCopy: { color: '#6F7771', fontSize: 14, lineHeight: 21, marginBottom: 18 },
-  textInput: { width: '100%', minHeight: 51, paddingHorizontal: 13, paddingVertical: 11, borderWidth: 1.2, borderColor: '#C9CDC9', borderRadius: 11, backgroundColor: C.white, color: C.ink, fontSize: 15 }, errorText: { color: C.red, fontSize: 13, lineHeight: 19, marginTop: 9 },
+  kicker: { color: C.green, fontSize: 12, lineHeight: 17, fontWeight: '800', letterSpacing: 1.2, marginBottom: 11 }, screenHeading: { color: C.ink, fontSize: 24, lineHeight: 30, fontWeight: '700', marginBottom: 9 }, bodyCopy: { color: '#6F7771', fontSize: 14, lineHeight: 21, marginBottom: 18 },
+  textInput: { width: '100%', minHeight: 51, paddingHorizontal: 13, paddingVertical: 11, borderWidth: 1.2, borderColor: '#C9CDC9', borderRadius: 11, backgroundColor: C.white, color: C.ink, fontSize: 15, lineHeight: 20, textAlignVertical: 'center' }, errorText: { color: C.red, fontSize: 13, lineHeight: 19, marginTop: 9 },
   primaryButton: { minHeight: 51, paddingHorizontal: 16, justifyContent: 'center', alignItems: 'center', borderRadius: 12, backgroundColor: C.green }, primaryButtonText: { color: C.white, fontSize: 16, fontWeight: '700' }, secondaryButton: { minHeight: 45, paddingHorizontal: 14, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#DEE6D3', borderRadius: 11, backgroundColor: C.white }, secondaryButtonText: { color: C.greenDark, fontSize: 14, fontWeight: '600' }, disabledButton: { backgroundColor: '#E9EEE3', borderColor: '#E9EEE3' }, pressed: { opacity: 0.75, transform: [{ scale: 0.99 }] }, footnote: { color: '#969D97', fontSize: 12, lineHeight: 18, marginTop: 12 },
-<<<<<<< HEAD
   loginScroll: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 12, paddingBottom: 22, backgroundColor: C.white }, loginBrand: { height: 76, alignItems: 'center', justifyContent: 'center' }, ginjerLogo: { width: 235, height: 68 }, loginTagline: { marginTop: 5, color: '#969D98', fontSize: 16, textAlign: 'center' }, loginIllustration: { width: '100%', height: 190, marginTop: 14, marginBottom: 14 }, loginSecurityNote: { flexDirection: 'row', gap: 8, alignItems: 'flex-start', marginBottom: 16, padding: 11, borderRadius: 10, backgroundColor: C.greenPale }, loginSecurityText: { flex: 1, color: C.greenDark, fontSize: 12, lineHeight: 17 }, fieldLabel: { color: C.greenDark, fontSize: 13, fontWeight: '600', marginBottom: 7 }, textLink: { alignSelf: 'center', marginTop: 12, padding: 6 }, linkText: { color: C.greenDark, fontSize: 14, fontWeight: '600' }, legalText: { color: '#969D98', textAlign: 'center', fontSize: 11, lineHeight: 17, marginTop: 16 }, legalLinkText: { color: C.greenDark, fontSize: 11, fontWeight: '600' }, mutedLink: { color: '#929A94', fontSize: 12 }, changeServer: { alignSelf: 'center', marginTop: 7, padding: 5 },
-=======
-  loginScroll: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 12, paddingBottom: 22, backgroundColor: C.white }, loginBrand: { height: 76, alignItems: 'center', justifyContent: 'center' }, ginjerLogo: { width: 235, height: 68 }, loginTagline: { marginTop: 5, color: '#969D98', fontSize: 16, textAlign: 'center' }, loginIllustration: { width: '100%', height: 190, marginTop: 14, marginBottom: 14 }, authTabs: { flexDirection: 'row', gap: 6, padding: 4, borderRadius: 11, backgroundColor: '#F2F4EF', marginBottom: 14 }, authTab: { minHeight: 38, flex: 1, justifyContent: 'center', alignItems: 'center', borderRadius: 8 }, authTabActive: { backgroundColor: C.white, elevation: 1, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } }, authTabText: { color: C.muted, fontSize: 12, fontWeight: '500' }, authTabTextActive: { color: C.greenDark, fontWeight: '700' }, fieldLabel: { color: C.greenDark, fontSize: 13, fontWeight: '600', marginBottom: 7 }, textLink: { alignSelf: 'center', marginTop: 12, padding: 6 }, linkText: { color: C.greenDark, fontSize: 14, fontWeight: '600' }, legalText: { color: '#969D98', textAlign: 'center', fontSize: 11, lineHeight: 17, marginTop: 16 }, legalLinkText: { color: C.greenDark, fontSize: 11, fontWeight: '600' }, mutedLink: { color: '#929A94', fontSize: 12 }, changeServer: { alignSelf: 'center', marginTop: 7, padding: 5 },
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
-  listTopBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 17, paddingTop: 10, paddingBottom: 5 }, sectionTitle: { color: C.ink, fontSize: 19, lineHeight: 26, fontWeight: '700' }, topActions: { flexDirection: 'row', gap: 2 }, iconButton: { minWidth: 38, minHeight: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 10 }, pageHeader: { height: 52, zIndex: 4, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, backgroundColor: '#FFFFFFF2' }, pageTitle: { flex: 1, textAlign: 'center', color: C.ink, fontSize: 16, fontWeight: '700' }, pageRight: { minWidth: 38, alignItems: 'flex-end' },
+  listTopBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 17, paddingTop: 10, paddingBottom: 5 }, sectionTitle: { color: C.ink, fontSize: 19, lineHeight: 26, fontWeight: '700' }, topActions: { flexDirection: 'row', gap: 2 }, iconButton: { minWidth: 38, minHeight: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 10 }, pageHeader: { minHeight: 52, zIndex: 4, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, backgroundColor: '#FFFFFFF2' }, pageTitle: { flex: 1, minWidth: 0, paddingHorizontal: 4, textAlign: 'center', color: C.ink, fontSize: 16, lineHeight: 21, fontWeight: '700' }, pageRight: { minWidth: 38, alignItems: 'flex-end' },
   projectSelector: { minHeight: 52, marginHorizontal: 16, marginTop: 7, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: C.line, borderRadius: 12, backgroundColor: C.white, shadowColor: '#293221', shadowOpacity: 0.035, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }, elevation: 1 }, selectorCaption: { color: '#A1A7A2', fontSize: 9, lineHeight: 12, fontWeight: '700', letterSpacing: 0.7 }, selectorName: { color: C.ink, fontSize: 13, fontWeight: '600', marginTop: 2 },
-  searchField: { minHeight: 45, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderColor: '#EEF0EC', borderRadius: 12, backgroundColor: C.white, shadowColor: '#293221', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1 }, searchInput: { flex: 1, minWidth: 0, height: 44, padding: 0, color: C.ink, fontSize: 13 },
-  listSummary: { paddingHorizontal: 18, paddingTop: 13, paddingBottom: 7, flexDirection: 'row', justifyContent: 'space-between' }, summaryText: { color: '#929A94', fontSize: 10, fontWeight: '500' }, deviceList: { gap: 10, paddingHorizontal: 14, paddingTop: 4, paddingBottom: 16 }, deviceCard: { minHeight: 124, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 11, borderRadius: 14, backgroundColor: C.white, elevation: 2, shadowColor: '#1F2C19', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } }, deviceThumb: { alignItems: 'center', justifyContent: 'center', borderRadius: 11, backgroundColor: '#F4F7F1' }, deviceCardBody: { flex: 1, minWidth: 0, alignSelf: 'stretch', justifyContent: 'center' }, deviceName: { color: C.ink, fontSize: 13, fontWeight: '700' }, deviceId: { color: '#929A94', fontSize: 9, marginTop: 2 }, deviceLocation: { color: '#7C857E', fontSize: 10, marginTop: 4 }, chipRow: { flexDirection: 'row', gap: 5, marginTop: 7 }, statusChip: { maxWidth: 100, paddingHorizontal: 7, paddingVertical: 4, borderRadius: 6 }, statusChipText: { fontSize: 9, fontWeight: '600' }, deviceCardMeta: { width: 104, alignItems: 'flex-end', alignSelf: 'stretch', justifyContent: 'center' }, deviceMetaHeading: { maxWidth: '100%', flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 3 }, onlineDot: { width: 8, height: 8, borderRadius: 5 }, lastLabel: { color: '#A1A7A2', fontSize: 8 }, lastTime: { maxWidth: '100%', marginTop: 2, color: '#626B64', fontSize: 8, lineHeight: 11, textAlign: 'right' },
+  searchField: { minHeight: 45, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderColor: '#EEF0EC', borderRadius: 12, backgroundColor: C.white, shadowColor: '#293221', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1 }, searchInput: { flex: 1, minWidth: 0, height: 44, padding: 0, color: C.ink, fontSize: 13, lineHeight: 18, textAlignVertical: 'center' },
+  listSummary: { paddingHorizontal: 18, paddingTop: 13, paddingBottom: 7, flexDirection: 'row', justifyContent: 'space-between' }, summaryText: { color: '#929A94', fontSize: 10, lineHeight: 14, fontWeight: '500' }, deviceList: { gap: 10, paddingHorizontal: 14, paddingTop: 4, paddingBottom: 16 }, deviceCard: { minHeight: 132, flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 11, borderRadius: 14, backgroundColor: C.white, elevation: 2, shadowColor: '#1F2C19', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } }, deviceThumb: { flexShrink: 0, alignItems: 'center', justifyContent: 'center', borderRadius: 11, backgroundColor: '#F4F7F1' }, deviceCardBody: { flex: 1, minWidth: 0, paddingVertical: 2, justifyContent: 'center' }, deviceName: { color: C.ink, fontSize: 13, lineHeight: 18, fontWeight: '700' }, deviceId: { color: '#929A94', fontSize: 9, lineHeight: 13, marginTop: 2 }, deviceLocation: { color: '#7C857E', fontSize: 10, lineHeight: 14, marginTop: 4 }, chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 7 }, statusChip: { maxWidth: '100%', paddingHorizontal: 7, paddingVertical: 4, borderRadius: 6 }, statusChipText: { fontSize: 9, lineHeight: 12, fontWeight: '600' }, deviceCardMeta: { width: 82, flexShrink: 0, alignItems: 'flex-end', paddingTop: 1 }, deviceMetaHeading: { maxWidth: '100%', flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 3 }, onlineDot: { width: 8, height: 8, borderRadius: 5 }, lastLabel: { maxWidth: '100%', color: '#A1A7A2', fontSize: 8, lineHeight: 11, textAlign: 'right' }, lastTime: { maxWidth: '100%', marginTop: 2, color: '#626B64', fontSize: 8, lineHeight: 11, textAlign: 'right' },
   tabSafeArea: { backgroundColor: C.white }, bottomTabs: { minHeight: 60, paddingTop: 3, paddingBottom: Platform.OS === 'android' ? 4 : 2, flexDirection: 'row', alignItems: 'center', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#E9ECE7', backgroundColor: C.white }, tabButton: { flex: 1, height: 54, alignItems: 'center', justifyContent: 'center', gap: 2 }, tabLabel: { color: '#999F9A', fontSize: 9, lineHeight: 12, fontWeight: '500' }, tabLabelActive: { color: C.greenDark, fontWeight: '700' }, notificationsLink: { minHeight: 44, marginTop: 5, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, backgroundColor: '#F1F6E9' }, notificationsLinkText: { flex: 1, color: C.greenDark, fontSize: 12, fontWeight: '600' },
   emptyBox: { minHeight: 170, alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 18 }, emptyInline: { minHeight: 56, justifyContent: 'center' }, emptyText: { color: '#929A94', fontSize: 13, textAlign: 'center' },
   mapScreen: { flex: 1, backgroundColor: '#FFFFFF' }, mapHeader: { height: 48, zIndex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 16, paddingRight: 8, backgroundColor: '#FFFFFFF0' }, mapOverlay: { position: 'absolute', zIndex: 2, top: 58, left: 12, right: 12 }, mapSearch: { borderColor: '#E5EAE2' }, mapNotice: { position: 'absolute', zIndex: 1, top: 120, left: 12, right: 12, padding: 8, flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, backgroundColor: '#FFFFFFEE' }, mapNoticeText: { flex: 1, color: '#6E786F', fontSize: 9, lineHeight: 13 }, mapCount: { position: 'absolute', bottom: 12, left: 12, paddingHorizontal: 10, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 10, backgroundColor: '#FFFFFFF2', elevation: 2 }, mapCountText: { color: '#6F7970', fontSize: 10 }, currentLocationMarker: { width: 22, height: 22, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: C.white, borderRadius: 12, backgroundColor: '#D94343', elevation: 5, shadowColor: '#641717', shadowOpacity: 0.25, shadowRadius: 5, shadowOffset: { width: 0, height: 2 } }, currentLocationMarkerCenter: { width: 5, height: 5, borderRadius: 3, backgroundColor: C.white }, markerBubble: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: C.white, borderRadius: 19, borderBottomLeftRadius: 5, elevation: 4 }, mapDeviceCard: { position: 'absolute', bottom: 12, left: 12, right: 12, minHeight: 66, flexDirection: 'row', alignItems: 'center', gap: 9, padding: 10, borderRadius: 13, backgroundColor: C.white, elevation: 5, shadowColor: '#162015', shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 3 } }, mapDeviceName: { color: C.ink, fontSize: 13, fontWeight: '700' }, mapDeviceMeta: { color: C.muted, fontSize: 10, marginTop: 3 },
@@ -1413,19 +1179,9 @@ const styles = StyleSheet.create({
   loginPasswordShell: { position: 'relative', justifyContent: 'center' }, loginPasswordInput: { paddingRight: 48 }, passwordVisibilityButton: { position: 'absolute', right: 10, width: 36, height: 42, alignItems: 'center', justifyContent: 'center' }, authModeLink: { alignSelf: 'center', marginTop: 12, padding: 6 }, authModeLinkText: { color: C.greenDark, fontSize: 13, fontWeight: '600' },
   deviceProject: { color: C.greenDark, fontSize: 9, fontWeight: '600', marginTop: 3 },
   downlinkIdWarning: { marginHorizontal: 16, marginTop: 6, color: C.red, fontSize: 10, lineHeight: 14 },
-<<<<<<< HEAD
-=======
-  downlinkFeedback: { marginHorizontal: 16, marginTop: 10, padding: 11, flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderRadius: 10 }, downlinkFeedbackFailed: { backgroundColor: C.redPale }, downlinkFeedbackResponded: { backgroundColor: C.greenPale }, downlinkFeedbackWaiting: { backgroundColor: C.amberPale }, downlinkFeedbackText: { flex: 1, fontSize: 11, lineHeight: 16 }, downlinkFeedbackTextFailed: { color: C.red }, downlinkFeedbackTextResponded: { color: C.greenDark }, downlinkFeedbackTextWaiting: { color: '#8A681B' },
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
   downlinkFieldsRow: { flexDirection: 'row', gap: 10 }, downlinkClassRow: { minHeight: 44, marginTop: 6, padding: 3, flexDirection: 'row', gap: 3, borderWidth: 1, borderColor: C.line, borderRadius: 10, backgroundColor: C.white }, downlinkClassOption: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 7 }, downlinkClassOptionSelected: { backgroundColor: C.greenPale }, downlinkClassText: { color: C.muted, fontSize: 11 }, downlinkClassTextSelected: { color: C.greenDark, fontWeight: '700' },
   automationBreadcrumb: { minHeight: 35, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 5 }, automationBreadcrumbText: { maxWidth: 120, color: C.muted, fontSize: 10 }, automationBreadcrumbCurrent: { flexShrink: 1, color: C.greenDark, fontSize: 10, fontWeight: '700' },
   automationFilters: { minHeight: 45, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 7 }, automationFilter: { minHeight: 40, flex: 1, paddingHorizontal: 9, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 4, borderWidth: 1, borderColor: C.line, borderRadius: 10, backgroundColor: C.white }, automationFilterText: { flex: 1, minWidth: 0 }, automationFilterLabel: { color: C.greenDark, fontSize: 8, fontWeight: '700' }, automationFilterValue: { color: C.ink, fontSize: 11, marginTop: 1 },
   automationSectionHeading: { marginHorizontal: 15, marginTop: 10, marginBottom: 7, color: C.ink, fontSize: 14, fontWeight: '700' }, automationList: { gap: 8, paddingHorizontal: 13, paddingBottom: 18 }, automationCard: { padding: 11, borderWidth: 1, borderColor: '#ECEFEB', borderRadius: 12, backgroundColor: C.white }, automationCardRunning: { borderColor: '#D9E7CC', backgroundColor: '#F4F8EE' }, automationRowTop: { flexDirection: 'row', alignItems: 'center', gap: 4 }, automationName: { color: C.greenDark, fontSize: 11, fontWeight: '700' }, automationSubtitle: { color: C.muted, fontSize: 9, marginTop: 3 }, automationRowBottom: { minHeight: 28, marginTop: 7, flexDirection: 'row', alignItems: 'center', gap: 6 }, runAutomationButton: { minHeight: 25, paddingHorizontal: 9, flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 13, backgroundColor: C.green }, runAutomationButtonRunning: { opacity: 0.72 }, runAutomationText: { color: C.white, fontSize: 9, fontWeight: '700' }, automationRunningPill: { paddingHorizontal: 7, paddingVertical: 4, borderWidth: 1, borderColor: '#E4B85A', borderRadius: 9, color: '#A67C24', fontSize: 8, fontWeight: '700' }, automationCountPill: { minHeight: 22, paddingHorizontal: 7, flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 12, backgroundColor: '#F4F5F3' }, automationCountText: { color: C.muted, fontSize: 9 }, automationEmpty: { minHeight: 150, alignItems: 'center', justifyContent: 'center', gap: 8 }, automationApiNote: { marginTop: 4, padding: 10, flexDirection: 'row', alignItems: 'flex-start', gap: 7, borderRadius: 9, backgroundColor: '#F4F8EE' },
   toast: { position: 'absolute', left: 20, right: 20, bottom: 74, zIndex: 20, minHeight: 38, paddingHorizontal: 14, paddingVertical: 10, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: '#26312B', elevation: 5 }, toastText: { color: C.white, fontSize: 11, textAlign: 'center' }, loadingOverlay: { ...StyleSheet.absoluteFillObject, zIndex: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8F9F7AA' },
 });
-<<<<<<< HEAD
-=======
-
-
-
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf

@@ -2,7 +2,6 @@
 
 const http = require('node:http');
 const os = require('node:os');
-<<<<<<< HEAD
 const crypto = require('node:crypto');
 
 const PORT = Number(process.env.ALUMHACKS_PORT || 8787);
@@ -10,15 +9,6 @@ const GINJER_URL = String(process.env.GINJER_GRAPHQL_URL || 'https://devapi.ginj
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 const sessions = new Map();
 const SIGN_IN_QUERY = `query SignIn($auth: SignInInput!) { signIn(auth: $auth) { _id firstName lastName emailId token defaultAccount organisationId } }`;
-=======
-
-const PORT = Number(process.env.ALUMHACKS_PORT || 8787);
-const GINJER_URL = String(process.env.GINJER_GRAPHQL_URL || 'https://devapi.ginjer.io/graphql').replace(/\/+$/, '');
-const TOKEN_TTL_MS = 8 * 60 * 60 * 1000;
-
-let ginjerToken = '';
-let tokenExpiresAt = 0;
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
 
 function json(res, status, data) {
   const body = JSON.stringify(data);
@@ -31,7 +21,6 @@ function json(res, status, data) {
   res.end(body);
 }
 
-<<<<<<< HEAD
 function createSession(token) {
   const id = crypto.randomBytes(32).toString('base64url');
   sessions.set(id, { token, expiresAt: Date.now() + SESSION_TTL_MS });
@@ -52,16 +41,6 @@ function getSession(req) {
 function clearSession(req) {
   const id = typeof req.headers['x-alumhacks-session'] === 'string' ? req.headers['x-alumhacks-session'] : '';
   if (id) sessions.delete(id);
-=======
-function clearToken() {
-  ginjerToken = '';
-  tokenExpiresAt = 0;
-}
-
-function tokenIsValid() {
-  if (ginjerToken && Date.now() >= tokenExpiresAt) clearToken();
-  return Boolean(ginjerToken);
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
 }
 
 function readJson(req, maxBytes = 1024 * 1024) {
@@ -130,17 +109,9 @@ async function proxyGraphql(req, res) {
   if (typeof payload.query !== 'string' || !payload.query.trim()) {
     return json(res, 400, { error: 'A GraphQL query is required.' });
   }
-<<<<<<< HEAD
   const session = getSession(req);
   if (!session) return json(res, 401, { error: 'Your session has expired. Please sign in again.', code: 'SESSION_EXPIRED' });
   const headers = { 'Content-Type': 'application/json', authorization: session.token };
-=======
-  const headers = { 'Content-Type': 'application/json' };
-  if (req.headers['x-ginjer-authenticated'] === 'true') {
-    if (!tokenIsValid()) return json(res, 401, { error: 'No Ginjer token is stored. Reconnect using your token.' });
-    headers.authorization = ginjerToken;
-  }
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
   try {
     const upstream = await fetch(GINJER_URL, {
       method: 'POST',
@@ -149,13 +120,10 @@ async function proxyGraphql(req, res) {
       signal: AbortSignal.timeout(30000)
     });
     const raw = await upstream.text();
-<<<<<<< HEAD
     if (upstream.status === 401 || upstream.status === 403) {
       sessions.delete(session.id);
       return json(res, 401, { error: 'Ginjer rejected this session. Please sign in again.', code: 'SESSION_EXPIRED' });
     }
-=======
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
     res.writeHead(upstream.status, {
       'Content-Type': upstream.headers.get('content-type') || 'application/json; charset=utf-8',
       'Cache-Control': 'no-store',
@@ -167,7 +135,6 @@ async function proxyGraphql(req, res) {
   }
 }
 
-<<<<<<< HEAD
 async function login(req, res) {
   let body;
   try { body = await readJson(req, 16 * 1024); }
@@ -197,39 +164,16 @@ async function login(req, res) {
   }
 }
 
-=======
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
 const server = http.createServer(async (req, res) => {
   if (!isLocalRequest(req, res)) return;
   const url = new URL(req.url, 'http://127.0.0.1:' + PORT);
 
   if (req.method === 'GET' && url.pathname === '/api/status') {
-<<<<<<< HEAD
     return json(res, 200, { ok: true });
   }
   if (req.method === 'POST' && url.pathname === '/api/auth/login') return login(req, res);
   if (req.method === 'GET' && url.pathname === '/api/session') return json(res, 200, { authenticated: Boolean(getSession(req)) });
   if (req.method === 'DELETE' && url.pathname === '/api/session') { clearSession(req); return json(res, 200, { authenticated: false }); }
-=======
-    return json(res, 200, { ok: true, tokenConfigured: tokenIsValid() });
-  }
-  if (req.method === 'POST' && url.pathname === '/api/token') {
-    let body;
-    try { body = await readJson(req, 16 * 1024); }
-    catch (err) { return json(res, err.status || 400, { error: err.message }); }
-    const token = typeof body.token === 'string' ? body.token.trim().replace(/^Bearer\s+/i, '') : '';
-    if (!token || token.length > 8192 || /[\r\n]/.test(token)) {
-      return json(res, 400, { error: 'Enter a valid token value from Postman.' });
-    }
-    ginjerToken = token;
-    tokenExpiresAt = Date.now() + TOKEN_TTL_MS;
-    return json(res, 200, { tokenConfigured: true, expiresInHours: 8 });
-  }
-  if (req.method === 'DELETE' && url.pathname === '/api/token') {
-    clearToken();
-    return json(res, 200, { tokenConfigured: false });
-  }
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
   if (req.method === 'POST' && url.pathname === '/api/graphql') return proxyGraphql(req, res);
 
   json(res, 404, { error: 'Not found.' });
@@ -252,10 +196,6 @@ server.listen(PORT, '0.0.0.0', () => {
     process.stdout.write('Phone on the same Wi-Fi: http://' + address + ':' + PORT + '\n');
   }
   process.stdout.write('LAN access is limited to private IPv4 networks. Use only on a trusted Wi-Fi network.\n');
-<<<<<<< HEAD
   process.stdout.write('Per-user Ginjer sessions are memory-only and expire after 8 hours of inactivity. Press Ctrl+C to stop.\n');
-=======
-  process.stdout.write('Token storage is memory-only and expires after 8 hours. Press Ctrl+C to stop.\n');
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
 });
 

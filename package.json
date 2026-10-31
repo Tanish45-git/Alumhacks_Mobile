@@ -7,12 +7,8 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-<<<<<<< HEAD
     "backend": "node server.js",
     "test": "node --test test/server.test.js"
-=======
-    "backend": "node server.js"
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
@@ -21,10 +17,7 @@
     "expo-font": "~58.0.11",
     "expo-image-picker": "~58.0.10",
     "expo-location": "~58.0.20",
-<<<<<<< HEAD
     "expo-secure-store": "~58.0.2",
-=======
->>>>>>> b820b6d2874d66eec56b9bcd357ee62b370ebcdf
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-native": "0.88.1",
