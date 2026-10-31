@@ -21,10 +21,28 @@ const displayDate = value => {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
 };
-const selectDeviceType = name => /panic|alert|button|sos/i.test(name) ? 'alert'
-  : /water|level|fill/i.test(name) ? 'water'
-    : /air|quality/i.test(name) ? 'air'
-      : /cold|chain|temperature/i.test(name) ? 'snow' : 'controller';
+export function selectDeviceType(device) {
+  const attributes = asArray(device.attributes)
+    .map(attribute => `${attribute.attributeName || ''} ${formatValue(attribute.value)}`)
+    .join(' ');
+  const description = [device.name, device.hardwareType, device.description, attributes].filter(Boolean).join(' ');
+  return /panic|alert|button|sos/i.test(description) ? 'alert'
+    : /odor|air[\s-]?quality|air[\s-]?pollution|co2|carbon dioxide|gas sensor/i.test(description) ? 'air'
+      : /comfort|thermostat|climate|ambient|room[\s-]?(temperature|temp)/i.test(description) ? 'comfort'
+        : /water|level|fill|tank/i.test(description) ? 'water'
+          : /cold[\s-]?chain|freezer|refrigerat|cold storage/i.test(description) ? 'snow'
+            : /soil|agri|irrigat|moisture|crop/i.test(description) ? 'agriculture'
+              : /busy[\s-]?light|light|bulb|lamp|lighting/i.test(description) ? 'busylight'
+                : /occupancy|motion|presence|pir sensor/i.test(description) ? 'occupancy'
+                  : /door|lock|window|access control/i.test(description) ? 'access'
+                    : /smoke|fire|heat detector/i.test(description) ? 'fire'
+                      : /energy|power|electric|current sensor|meter/i.test(description) ? 'energy'
+                        : /humidity|humid/i.test(description) ? 'humidity'
+                          : /gateway|router/i.test(description) ? 'gateway'
+                            : /tektelic/i.test(description) ? 'tektelic'
+                              : /controller|relay|switch|gpio|^io\b/i.test(description) ? 'controller'
+                                : 'generic';
+}
 const formatValue = value => typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value ?? '—');
 const outputColor = (value, supplied) => {
   const explicit = String(supplied || '').toLowerCase();
@@ -56,7 +74,7 @@ export function normalizeDevice(device) {
     name: device.name || 'Unnamed device',
     heard: displayDate(device.timestamp),
     chips,
-    kind: selectDeviceType(device.name || device.hardwareType || 'device'),
+    kind: selectDeviceType(device),
     loc: position.placeName || device.clusterName || 'Location unavailable',
     output: formatValue(outputs[0]?.value ?? outputs[0]?.label ?? '—'),
     outputs,

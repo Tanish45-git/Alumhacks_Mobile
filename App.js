@@ -30,16 +30,31 @@ const C = {
   line: '#E4EAE3', canvas: '#F5F7F4', white: '#FFFFFF', red: '#D85F56', redPale: '#FCEDEA',
   amber: '#D69A2D', amberPale: '#FFF4DF', blue: '#398FAE', bluePale: '#EAF4F7',
 };
-const DEVICE_IMAGES = {
-  snow: require('./assets/reference/device-cold-chain.png'),
-  water: require('./assets/reference/device-level-sensor.png'),
-  controller: require('./assets/reference/device-controller.png'),
-  alert: require('./assets/reference/device-panic-button.png'),
-  air: require('./assets/reference/device-air-quality.png'),
-  busylight: require('./assets/reference/device-busylight.png'),
-  tektelic: require('./assets/reference/device-tektelic.png'),
-  agriculture: require('./assets/reference/device-agriculture.png'),
+const DEVICE_VISUALS = {
+  snow: { icon: 'snowflake', color: '#3386A3', background: '#EAF5F8' },
+  water: { icon: 'water-outline', color: '#398FAE', background: '#EAF4F7' },
+  controller: { icon: 'tune-variant', color: C.greenDark, background: C.greenPale },
+  alert: { icon: 'alarm-light-outline', color: C.red, background: C.redPale },
+  air: { icon: 'air-filter', color: '#4B83A3', background: '#EEF4FA' },
+  busylight: { icon: 'lightbulb-on-outline', color: '#B88424', background: C.amberPale },
+  tektelic: { icon: 'access-point', color: '#6E65B6', background: '#F1EFFB' },
+  agriculture: { icon: 'sprout', color: '#53864A', background: '#EEF5E8' },
+  comfort: { icon: 'thermometer', color: '#C56B43', background: '#FFF0E8' },
+  occupancy: { icon: 'motion-sensor', color: '#7370B8', background: '#F0EFFA' },
+  access: { icon: 'door-closed', color: '#4E7DA9', background: '#EEF4FA' },
+  fire: { icon: 'smoke-detector-outline', color: '#CB5248', background: '#FDEEEA' },
+  energy: { icon: 'lightning-bolt', color: '#C78925', background: '#FFF5E3' },
+  humidity: { icon: 'water-percent', color: '#4387A2', background: '#EAF4F7' },
+  gateway: { icon: 'router-wireless', color: '#6F65AE', background: '#F1EFFB' },
 };
+const GENERIC_DEVICE_VISUALS = [
+  { icon: 'chip', color: '#517B69', background: '#EDF4EF' },
+  { icon: 'radar', color: '#5D78A1', background: '#EEF2F8' },
+  { icon: 'access-point', color: '#6E65B6', background: '#F1EFFB' },
+  { icon: 'chart-timeline-variant', color: '#3E8293', background: '#EAF4F5' },
+  { icon: 'router-wireless', color: '#A16C43', background: '#F8F0E9' },
+  { icon: 'devices', color: '#647A4A', background: '#F0F4E9' },
+];
 const NOTICE_IMAGES = {
   'notice-fill-critical': require('./assets/reference/notice-fill-critical.png'),
   'notice-fill-warning': require('./assets/reference/notice-fill-warning.png'),
@@ -178,20 +193,28 @@ function StatusChip({ label, status }) {
   return <View style={[styles.statusChip, { backgroundColor: colors[0] }]}><Text numberOfLines={1} style={[styles.statusChipText, { color: colors[1] }]}>{label}</Text></View>;
 }
 
-function DeviceThumb({ kind, size = 54 }) {
-  const image = DEVICE_IMAGES[kind] || DEVICE_IMAGES.controller;
-  return <View style={[styles.deviceThumb, { width: size, height: size }]}><Image source={image} resizeMode="contain" style={{ width: size - 7, height: size - 7 }} /></View>;
+function genericDeviceVisual(name) {
+  const key = String(name || 'device').trim().toLowerCase();
+  const hash = [...key].reduce((value, character) => (value * 31 + character.charCodeAt(0)) >>> 0, 7);
+  return GENERIC_DEVICE_VISUALS[hash % GENERIC_DEVICE_VISUALS.length];
+}
+
+function DeviceThumb({ kind, name, size = 54 }) {
+  const visual = DEVICE_VISUALS[kind] || genericDeviceVisual(name);
+  return <View style={[styles.deviceThumb, { width: size, height: size, backgroundColor: visual.background, borderColor: `${visual.color}30`, borderWidth: 1 }]}>
+    <Icon name={visual.icon} size={Math.round(size * 0.48)} color={visual.color} />
+  </View>;
 }
 
 function DeviceCard({ device, onPress }) {
   const statusColor = device.chips?.[0]?.status === 'red' ? C.red : device.chips?.[0]?.status === 'amber' ? C.amber : C.green;
   return <Pressable accessibilityRole="button" accessibilityLabel={`${device.name}, ${device.loc}. Open details`} onPress={onPress} style={({ pressed }) => [styles.deviceCard, styles.deviceCardLayoutOverride, pressed && styles.pressed]}>
     <View style={styles.deviceCardTop}>
-      <DeviceThumb kind={device.kind} size={50} />
+      <DeviceThumb kind={device.kind} name={device.name} size={50} />
       <View style={styles.deviceCardBody}>
-        <Text numberOfLines={1} style={styles.deviceName}>{device.name}</Text>
+        <Text numberOfLines={1} style={[styles.deviceName, styles.deviceNamePremium]}>{device.name}</Text>
         {device.projectName || device.solutionName ? <Text numberOfLines={1} style={styles.deviceProject}>{device.projectName || device.solutionName}</Text> : null}
-        <Text numberOfLines={1} style={styles.deviceLocation}><Icon name="map-marker-outline" size={13} color={C.muted} /> {device.loc}</Text>
+        <Text numberOfLines={1} style={[styles.deviceLocation, styles.deviceLocationPremium]}><Icon name="map-marker-outline" size={13} color={C.muted} /> {device.loc}</Text>
       </View>
       <Icon name="chevron-right" color="#A1AAA2" size={20} />
     </View>
@@ -853,7 +876,7 @@ function AppContent() {
     return <View style={styles.mapScreen}>
       <MapView ref={mapRef} key={`${full ? 'full' : 'detail'}-${route}`} style={StyleSheet.absoluteFill} initialRegion={{ ...initial, latitudeDelta: coordinates.length ? 2.5 : 24, longitudeDelta: coordinates.length ? 2.5 : 24 }} showsUserLocation={false} showsCompass userInterfaceStyle="light" customMapStyle={GOOGLE_MAPS_LIGHT_STYLE} onPress={handleMapPress}>
         {mapDevices.map(device => <Marker key={device.apiId || device.id} coordinate={{ latitude: Number(device.position.lat), longitude: Number(device.position.lng) }} title={mapUsesPlaceholders ? `Sample placeholder · ${device.name}` : device.name} description={mapUsesPlaceholders ? 'Example location only · Not a live Ginjer device' : `${device.loc} · Last heard ${device.heard}`} onPress={() => { setSelectedCustomLocation(null); setSelectedMapDevice(device); if (!full) setSelectedDevice(device); }}>
-          <View style={[styles.markerBubble, { backgroundColor: chipColor(device.chips?.[0]?.status) }]}><Icon name={kindIcon(device.kind)} size={17} color={C.white} /></View>
+          <View style={[styles.markerBubble, { backgroundColor: chipColor(device.chips?.[0]?.status) }]}><Icon name={kindIcon(device.kind, device.name)} size={17} color={C.white} /></View>
         </Marker>)}
         {selectedCustomLocation ? <Marker coordinate={{ latitude: selectedCustomLocation.latitude, longitude: selectedCustomLocation.longitude }} title={selectedCustomLocation.placeName} description="Selected on map"><View style={[styles.markerBubble, { backgroundColor: C.red }]}><Icon name="map-marker" size={17} color={C.white} /></View></Marker> : null}
         {currentLocation ? <Marker coordinate={currentLocation} title="Your current location" description="Your phone’s location" zIndex={1000} tracksViewChanges={false}>
@@ -865,7 +888,7 @@ function AppContent() {
       {visibleMarkers.length === 0 ? <View style={styles.mapNotice}><Icon name="map-marker-off-outline" size={17} color={C.greenDark} /><Text style={styles.mapNoticeText}>Tap anywhere on the map or search a city to select a location.</Text></View> : mapUsesPlaceholders ? <View style={styles.mapNotice}><Icon name="information-outline" size={17} color={C.greenDark} /><Text style={styles.mapNoticeText}>Sample placeholders only — these are not live devices or confirmed locations. Tap a marker for its sample details.</Text></View> : null}
       <View style={styles.mapCount}><Icon name="map-marker-multiple-outline" color={C.greenDark} size={15} /><Text style={styles.mapCountText}>{mapUsesPlaceholders ? `${visibleMarkers.length} sample placeholders` : `${visibleMarkers.length} of ${devices.length} devices with coordinates`}</Text></View>
       {selectedMapDevice ? <View style={styles.mapDeviceCard}>
-        <DeviceThumb kind={selectedMapDevice.kind} size={40} />
+        <DeviceThumb kind={selectedMapDevice.kind} name={selectedMapDevice.name} size={40} />
         <View style={{ flex: 1, minWidth: 0 }}><Text numberOfLines={1} style={styles.mapDeviceName}>{mapUsesPlaceholders ? `Sample · ${selectedMapDevice.name}` : selectedMapDevice.name}</Text><Text numberOfLines={1} style={styles.mapDeviceMeta}>{selectedMapDevice.loc} · {selectedMapDevice.heard}</Text></View>
         <IconButton name="chevron-right" label={`Open ${selectedMapDevice.name}`} color={C.greenDark} onPress={() => goToDevice(selectedMapDevice, route)} />
       </View> : selectedCustomLocation ? <View style={styles.mapDeviceCard}>
@@ -961,7 +984,7 @@ function AppContent() {
     const coords = hasCoordinates(device);
     return <ScrollView style={styles.screen} contentContainerStyle={styles.detailScroll}>
       <ScreenHeader title="Device Details" onBack={onDetailBack} right={<IconButton name="dots-horizontal" label="Device options" onPress={() => showToast('No additional device options are available.')} />} />
-      <View style={styles.detailSummary}><DeviceThumb kind={device.kind} size={64} /><View style={{ flex: 1 }}><Text style={styles.detailName}>{device.name}</Text><Text style={styles.detailId}>Device ID · {device.id || device.devEui || device.hardwareId || 'Not reported'}</Text><Text style={styles.detailHeard}>Last heard · {device.heard}</Text></View><View style={styles.detailMetaTop}><Text style={styles.detailMetaLabel}>Hardware</Text><Text numberOfLines={2} style={styles.detailMetaValue}>{device.hardwareType || 'Not reported'}</Text><Text style={[styles.detailMetaLabel, { marginTop: 6 }]}>Network</Text><Text numberOfLines={1} style={styles.detailMetaValue}>{device.networkId || 'Not reported'}</Text></View></View>
+      <View style={styles.detailSummary}><DeviceThumb kind={device.kind} name={device.name} size={64} /><View style={{ flex: 1 }}><Text style={styles.detailName}>{device.name}</Text><Text style={styles.detailId}>Device ID · {device.id || device.devEui || device.hardwareId || 'Not reported'}</Text><Text style={styles.detailHeard}>Last heard · {device.heard}</Text></View><View style={styles.detailMetaTop}><Text style={styles.detailMetaLabel}>Hardware</Text><Text numberOfLines={2} style={styles.detailMetaValue}>{device.hardwareType || 'Not reported'}</Text><Text style={[styles.detailMetaLabel, { marginTop: 6 }]}>Network</Text><Text numberOfLines={1} style={styles.detailMetaValue}>{device.networkId || 'Not reported'}</Text></View></View>
       <View style={styles.detailFields}><View style={styles.detailField}><Text style={styles.detailFieldLabel}>Location</Text><Text numberOfLines={2} style={styles.detailFieldValue}>{device.loc}</Text></View><View style={styles.detailField}><Text style={styles.detailFieldLabel}>Main Output</Text><Text numberOfLines={2} style={styles.detailFieldValue}>{device.output}</Text></View></View>
       <Pressable onPress={() => setExpanded(!expanded)} style={styles.expandButton}><Text style={styles.expandButtonText}>{expanded ? 'See less' : 'See more'}</Text><Icon name={expanded ? 'chevron-up' : 'chevron-down'} size={17} color={C.greenDark} /></Pressable>
       {expanded ? <View style={styles.expandedDetails}><Text style={styles.expandedLine}><Text style={styles.bold}>Device type</Text> · {device.hardwareType || 'Not reported'}</Text><Text style={styles.expandedLine}><Text style={styles.bold}>Network ID</Text> · {device.networkId || 'Not reported'}</Text>{device.attributes?.length ? device.attributes.map((attribute, index) => <Text key={attribute.attributeId || index} style={styles.expandedLine}><Text style={styles.bold}>{attribute.attributeName || 'Attribute'}</Text> · {formatOutput(attribute.value)}</Text>) : <Text style={styles.expandedLine}><Text style={styles.bold}>Attributes</Text> · None returned</Text>}</View> : null}
@@ -1167,8 +1190,8 @@ function EmptyState({ text }) {
   return <View style={styles.emptyBox}><Icon name="inbox-outline" size={28} color="#A4AAA5" /><Text style={styles.emptyText}>{text}</Text></View>;
 }
 
-function kindIcon(kind) {
-  return kind === 'snow' ? 'snowflake' : kind === 'water' ? 'water-outline' : kind === 'alert' ? 'alert-outline' : kind === 'air' ? 'weather-windy' : 'tune-variant';
+function kindIcon(kind, name) {
+  return DEVICE_VISUALS[kind]?.icon || genericDeviceVisual(name).icon;
 }
 
 function chipColor(status) { return status === 'red' ? C.red : status === 'amber' ? C.amber : status === 'blue' ? C.blue : status === 'unknown' ? C.muted : C.green; }
@@ -1225,6 +1248,8 @@ const styles = StyleSheet.create({
   deviceCardLayoutOverride: { minHeight: 0, flexDirection: 'column', alignItems: 'stretch', gap: 10, padding: 13, borderWidth: 1, borderColor: C.line, borderRadius: 16, shadowColor: '#263529', shadowOpacity: 0.035, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 1 },
   deviceCardTop: { flexDirection: 'row', alignItems: 'center', gap: 11 },
   deviceCardBottom: { minHeight: 27, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  deviceNamePremium: { fontSize: 14, lineHeight: 19, letterSpacing: -0.2 },
+  deviceLocationPremium: { fontSize: 11, lineHeight: 15 },
   deviceCardChipRow: { flex: 1, minWidth: 0, marginTop: 0 },
   deviceLastHeard: { maxWidth: '42%', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 5 },
   deviceLastHeardText: { color: C.muted, fontSize: 9, lineHeight: 13 },
